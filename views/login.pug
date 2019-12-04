@@ -1,0 +1,24 @@
+extends layout.pug
+
+block title
+  title Login
+
+block content
+  div(class="row text-center h-100")
+    div(class="col-3")
+    div(class="col align-self-center justify-content-center")
+      h1 Log In:
+      form(action="/login" method="post" class="form-signin")
+        div(class="form-group")
+          input(type="text", class="form-control", id="inputUsername", placeholder="Username", name="username")
+        div(class="form-group")
+          input(type="password", class="form-control", id="inputPassword" placeholder="Password", name="password")
+        div(class="form-group")
+          button(type="submit", class="btn btn-primary") Login
+      form(action="/forgotPassword" method="get")
+        div(class="form-group")
+          button(type="submit", class="btn btn-info") Forgot Password?
+
+    div(class="col-3")
+
+      

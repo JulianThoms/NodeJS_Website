@@ -36,6 +36,12 @@ app.set("view engine", "pug");
 app.get("/", function (req, res) {
     res.render("index");
 });
+app.get("/login", function(req, res){
+    res.render("login");
+})
+app.get("/signup" function(req, res){
+    res.render("signup");
+})
 
 app.listen(PORT, function () {
     console.log(`Shopping App listening on Port ${PORT}`);
