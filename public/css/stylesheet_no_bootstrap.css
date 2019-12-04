@@ -1,0 +1,22 @@
+#sticky_footer {
+  flex-shrink: none;
+}
+body{
+  background-color: #282C34;
+  color: white;
+}
+
+html, body{ height:100%; margin:0; }
+header{ height:50px; background:lightcyan; }
+footer{ height:50px; background:PapayaWhip; }
+
+/* Trick */
+body{
+  display:flex;
+  flex-direction:column;
+}
+
+footer{
+  color: #282C34;
+  margin-top:auto;
+}

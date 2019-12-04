@@ -27,6 +27,9 @@ app.use(session({
     saveUninitialized: false
 }));
 
+//allowing CSS
+app.use(express.static(__dirname + '/public'));
+
 app.set("views", "views");
 app.set("view engine", "pug");
 
