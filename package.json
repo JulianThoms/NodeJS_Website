@@ -1,17 +1,21 @@
 {
-  "name": "shopping_list_node_express_postgres",
+  "name": "Bookstore_Website",
   "version": "1.0.0",
-  "description": "",
+  "description": "A website using nodejs with pug and databases for a project in university",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Julian Thoms",
+  "license": "AGPL-3.0-or-later",
   "dependencies": {
     "express": "^4.16.4",
     "express-session": "^1.15.6",
     "pg": "^7.7.1",
     "pug": "^2.0.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OTHRegensburgMedieninformatik/studienleistungbooksws1920-JulianThoms.git"
   }
 }
