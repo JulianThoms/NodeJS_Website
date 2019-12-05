@@ -20,13 +20,14 @@ block content
         button(type="submit", class="btn btn-outline-light btn-lg") Logout
       else
         h1 Sign Up
+        br
         form(action="/signup" method="post" class="form-signin")
           div(class="form-group")
             input(type="text", class="form-control", id="inputUsername", placeholder="Username", name="username")
           div(class="form-group")
             input(type="password", class="form-control", id="inputPassword" placeholder="Password", name="password")
           div(class="form-group")
-            button(type="submit", class="btn btn-primary") Sign-Up
+            button(type="submit", class="btn btn-primary") Create new Account
 
     div(class="col-2")
     

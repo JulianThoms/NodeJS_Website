@@ -43,11 +43,26 @@ app.get("/", function (req, res) {
       loggedIn = true;
       res.render("index");
   }
-  else{
+  else if (loggedOut == true){
     loggedIn = false;
     res.render("index");
+    loggedOut = false;
+  }
+  else{
+        loggedIn = false;
+        res.render("index");
   }
 });
+/*
+app.get("/favourites", function (req, res){
+  const username = req.session.user;
+  const userid = dbClient.query("SELECT id_")
+  const favourites = dbClient.query("SELECT books.title FROM (books INNER JOIN user ON books.id_book = users_favourites.id_book) INNER JOIN users ON users.id_user = user_favourites.id_user", function(dbErr, dbRes){
+
+    dbRes.render("favourites", {favourites})
+  });
+});
+*/
 
 app.get("/login", function(req, res){
   if(req.session.user != undefined){
