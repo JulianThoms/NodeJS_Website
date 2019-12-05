@@ -4,7 +4,11 @@ block title
   title Login
 
 block content
-  div(class="row text-center h-100")
-    ul
+  div(class="row")
+    h1(class="col-10 display-4") Your favourites, #{username}
+  br
+  br
+  div(class="row text-center ")
+    div(class="col-6 list-group")
       each favourite in favourites
-        li=favourite
+        a(href="#" class="list-group-item list-group-item-action bg-primary text-light")=favourite.title

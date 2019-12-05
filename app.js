@@ -54,15 +54,31 @@ app.get("/", function (req, res) {
   }
 });
 /*
-app.get("/favourites", function (req, res){
-  const username = req.session.user;
-  const userid = dbClient.query("SELECT id_")
-  const favourites = dbClient.query("SELECT books.title FROM (books INNER JOIN user ON books.id_book = users_favourites.id_book) INNER JOIN users ON users.id_user = user_favourites.id_user", function(dbErr, dbRes){
-
-    dbRes.render("favourites", {favourites})
-  });
+app.get("/flights", function (req, res) {
+     List all flights
+    dbClient.query("SELECT * FROM flights", function (dbError, dbResponse) {
+        res.render("flights", {
+            flights: dbResponse.rows
+        });
+    });
 });
 */
+
+app.get("/favourites", function (req, res){
+  let favourites = "";
+  let username = req.session.user;
+  dbClient.query("SELECT id_user FROM users WHERE name = $1", ['test'], function(dbErr, dbRes){
+    console.log(dbRes.rows[0].id_user)
+    let id = dbRes.rows[0].id_user;
+    if(id != undefined){
+    dbClient.query("SELECT books.title FROM (books INNER JOIN users_favourites ON books.id_book = users_favourites.id_book) INNER JOIN users ON users.id_user = users_favourites.id_user WHERE users.id_user = $1", [id], function(dbErr, dbRes){
+      console.log(dbRes.rows)
+      res.render("favourites", {
+        favourites: dbRes.rows, username
+      });
+    });
+  }});
+});
 
 app.get("/login", function(req, res){
   if(req.session.user != undefined){
@@ -115,8 +131,20 @@ app.get("/successful_logout", function(req, res){
 app.post("/signup", urlencodedParser, function(req, res){
   const username = req.body.username;
   const userpassword = req.body.password;
-  dbClient.query("INSERT INTO users (name, password) VALUES ($1, $2)", [username, userpassword], function(dbErr, dbRes){});
-  res.redirect("/");
+  const userpassword_check = req.body.password_check;
+
+  if(userpassword !== userpassword_check){
+    res.render("signup", {error_signup: "Your passwords do not match! Please try again"});
+  }
+  dbClient.query("SELECT * FROM users WHERE name = $1", [username], function(dbErr, dbRes){
+    if (dbRes.rows.length > 0){
+      res.render("signup", {error_signup: "Username already taken! Please choose a different one"});
+    }
+    else
+    dbClient.query("INSERT INTO users (name, password) VALUES ($1, $2)", [username, userpassword], function(dbErr, dbRes){});
+    res.redirect("/");
+  });
+
 });
 
 app.post("/login", urlencodedParser, function(req, res){

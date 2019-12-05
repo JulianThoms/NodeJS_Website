@@ -27,7 +27,14 @@ block content
           div(class="form-group")
             input(type="password", class="form-control", id="inputPassword" placeholder="Password", name="password")
           div(class="form-group")
+            input(type="password", class="form-control", id="inputPassword_check" placeholder="Repeat Password", name="password_check")
+          div(class="form-group")
+            input(type="password", class="form-control", id="inputPassword_check" placeholder="Security Question: Your favourite animal?", name="security_question")
+          div(class="form-group")
             button(type="submit", class="btn btn-primary") Create new Account
+        br
+        if error_signup != null  
+          div(class="alert alert-warning") #{error_signup}
 
     div(class="col-2")
     
