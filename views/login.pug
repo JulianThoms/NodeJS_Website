@@ -5,22 +5,34 @@ block title
 
 block content
   div(class="row text-center h-100")
-    div(class="col-3")
-    div(class="col align-self-center justify-content-center")
-      h1 Log In:
-      form(action="/login" method="post" class="form-signin")
-        div(class="form-group")
-          input(type="text", class="form-control", id="inputUsername", placeholder="Username", name="username")
-        div(class="form-group")
-          input(type="password", class="form-control", id="inputPassword" placeholder="Password", name="password")
-        div(class="form-group")
-          button(type="submit", class="btn btn-primary") Login
-        if error_login != null  
-          div(class="alert alert-warning") #{error_login}
-      form(action="/forgotPassword" method="get")
-        div(class="form-group")
-          button(type="submit", class="btn btn-info") Forgot Password?
+  
+    div(class="col-2")
+    div(class="col-8 align-self-center justify-content-center")
+      br
+      br
+      if loggedIn
+        h1(class="text-muted") Log In
+        br
+        h1(class="display-4") You are already logged in
+        h1(class="display-2") #{username}
+        br
+        form(action="/logout" method="get")
+          button(type="submit", class="btn btn-outline-light btn-lg") Logout
+      else
+        h1 Log In
+        form(action="/login" method="post" class="form-signin")
+          div(class="form-group")
+            input(type="text", class="form-control", id="inputUsername", placeholder="Username", name="username")
+          div(class="form-group")
+            input(type="password", class="form-control", id="inputPassword" placeholder="Password", name="password")
+          div(class="form-group")
+            button(type="submit", class="btn btn-primary") Login
+          if error_login != null  
+            div(class="alert alert-warning") #{error_login}
+        form(action="/forgotPassword" method="get")
+          div(class="form-group")
+            button(type="submit", class="btn btn-info") Forgot Password?
 
-    div(class="col-3")
+    div(class="col-2")
 
       

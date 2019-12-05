@@ -3,7 +3,8 @@ var pg = require("pg");
 var bodyParser = require("body-parser");
 var session = require("express-session");
 
-let loggedIn = false;
+global.loggedIn = false;
+global.loggedOut = false;
 
 const CON_STRING = process.env.DB_CON_STRING;
 if (CON_STRING == undefined) {
@@ -38,28 +39,63 @@ app.set("views", "views");
 app.set("view engine", "pug");
 
 app.get("/", function (req, res) {
-  req.session.loggedIn = true;
-  res.render("index", {loggedIn});
+  if(req.session.user != undefined){
+      loggedIn = true;
+      res.render("index");
+  }
+  else{
+    loggedIn = false;
+    res.render("index");
+  }
 });
 
 app.get("/login", function(req, res){
-  res.render("login");
+  if(req.session.user != undefined){
+    loggedIn = true;
+    let username = req.session.user;
+    res.render("login", {loggedIn, username});
+  }
+  else{
+    loggedIn = false;
+    res.render("login", {loggedIn});
+  }
+
 });
 
 app.get("/signup", function(req, res){
-  res.render("signup");
+  if(req.session.user != undefined){
+    loggedIn = true;
+    let username = req.session.user;
+    console.log(loggedIn);
+    res.render("signup", {loggedIn, username});
+  }
+  else{
+    loggedIn = false;
+    console.log(loggedIn);
+    res.render("signup", {loggedIn});
+  }
 });
 
+/*
 app.get("/successful_login", function(req, res){
   if(req.session.user != undefined){
     res.render("successful_login");
-  }
+
+    }
   else{
     res.render("login", {error_login: "Please log in to access this Page!"})
   }
 });
 
-
+app.get("/successful_logout", function(req, res){
+  if(req.session.user == undefined){
+    res.render("successful_logout");
+  }
+  else{
+    res.render("error")
+  }
+});
+*/
 
 app.post("/signup", urlencodedParser, function(req, res){
   const username = req.body.username;
@@ -78,14 +114,21 @@ app.post("/login", urlencodedParser, function(req, res){
     }
     else{
       req.session.user = username;
-      res.redirect("/successful_login");
+      res.redirect("/");
     }
   });
 });
 
 app.get('/logout', function (req, res) {
-  req.session.destroy();
-  res.send("logout success!");
+  if(req.session.user != undefined)
+    {
+      req.session.destroy();
+      loggedOut = true;
+      res.redirect("/");
+    }
+  else{
+    res.redirect("/");
+  }
 });
 
 app.post("/search", urlencodedParser, function(req, res){
@@ -95,4 +138,12 @@ app.post("/search", urlencodedParser, function(req, res){
 
 app.listen(PORT, function () {
     console.log(`Shopping App listening on Port ${PORT}`);
+});
+
+app.get("/error", function(req, res){
+  res.render("error");
+});
+//FIXIT
+app.get("*", function(req, res){
+  res.send("Error Page not Found");
 });
