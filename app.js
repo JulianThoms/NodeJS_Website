@@ -8,8 +8,8 @@ global.loggedOut = false;
 
 const CON_STRING = process.env.DB_CON_STRING;
 if (CON_STRING == undefined) {
-    console.log("Error: Environment variable DB_CON_STRING not set!");
-    process.exit(1);
+  console.log("Error: Environment variable DB_CON_STRING not set!");
+  process.exit(1);
 }
 
 pg.defaults.ssl = true;
@@ -17,7 +17,7 @@ var dbClient = new pg.Client(CON_STRING);
 dbClient.connect();
 
 var urlencodedParser = bodyParser.urlencoded({
-    extended: false
+  extended: false
 });
 
 const PORT = 3000;
@@ -25,10 +25,10 @@ const PORT = 3000;
 var app = express();
 
 app.use(session({
-    secret: "This is a secret!",
-    resave:true,
-    cookie: { maxAge: 3600000 }, //time in millisecs before cookie expires
-    saveUninitialized: false
+  secret: "This is a secret!",
+  resave:true,
+  cookie: { maxAge: 3600000 }, //time in millisecs before cookie expires
+  saveUninitialized: false
 }));
 
 
@@ -40,8 +40,8 @@ app.set("view engine", "pug");
 
 app.get("/", function (req, res) {
   if(req.session.user != undefined){
-      loggedIn = true;
-      res.render("index");
+    loggedIn = true;
+    res.render("index");
   }
   else if (loggedOut == true){
     loggedIn = false;
@@ -49,31 +49,12 @@ app.get("/", function (req, res) {
     loggedOut = false;
   }
   else{
-        loggedIn = false;
-        res.render("index");
+    loggedIn = false;
+    res.render("index");
   }
 });
 
 
-app.get("/favourites", function (req, res){
-  let favourites = "";
-  let username = req.session.user;
-  dbClient.query("SELECT id_user FROM users WHERE name = $1", ['username'], function(dbErr, dbRes){
-    if(dbRes.rows != 1){
-      //FIXIT
-      res.render("favourites", {favourites: "", username})
-      return;
-    }
-      let id = dbRes.rows[0].id_user;
-      if(id != undefined){
-        dbClient.query("SELECT books.title FROM (books INNER JOIN users_favourites ON books.id_book = users_favourites.id_book) INNER JOIN users ON users.id_user = users_favourites.id_user WHERE users.id_user = $1", [id], function(dbErr, dbRes){
-          console.log(dbRes.rows)
-          res.render("favourites", {
-            favourites: dbRes.rows, username
-      });
-    });
-  }});
-});
 
 app.get("/login", function(req, res){
   if(req.session.user != undefined){
@@ -144,29 +125,99 @@ app.post("/login", urlencodedParser, function(req, res){
 
 app.get('/logout', function (req, res) {
   if(req.session.user != undefined)
-    {
-      req.session.destroy();
-      loggedOut = true;
-      res.redirect("/");
-    }
+  {
+    req.session.destroy();
+    loggedOut = true;
+    res.redirect("/");
+  }
   else{
     res.redirect("/");
   }
 });
 
-app.post("/search", urlencodedParser, function(req, res){
-  const search = req.body.searchTerm;
-  dbClient.query("SELECT * FROM books WHERE ")
-});
-
-app.listen(PORT, function () {
-    console.log(`Shopping App listening on Port ${PORT}`);
-});
-
 app.get("/error", function(req, res){
   res.render("error");
 });
+
+
+//STOPS LOGGED-OUT PEOPLE FROM ACCESSING BELOW PAGES
+app.get("*", function(req, res, next){
+  if(req.session.user == undefined){
+    res.render("error", {error_message: "You have to be logged in to see this page!"});
+  }
+  else{
+    next();
+  }
+});
+
+app.post("*", function(req, res, next){
+  if(req.session.user == undefined){
+    res.render("error", {error_message: "You have to be logged in to see this page!"});
+  }
+  else{
+    next();
+  }
+});
+
+app.get("/favourites", function (req, res){
+  let favourites = "";
+  let username = req.session.user;
+  dbClient.query("SELECT id_user FROM users WHERE name = $1", [username], function(dbErr, dbRes){
+    if(dbRes.rows != 1){
+      //FIXIT
+      res.render("favourites", {favourites: "", username})
+      return;
+    }
+    let id = dbRes.rows[0].id_user;
+    if(id != undefined){
+      dbClient.query("SELECT books.title FROM (books INNER JOIN users_favourites ON books.id_book = users_favourites.id_book) INNER JOIN users ON users.id_user = users_favourites.id_user WHERE users.id_user = $1 LIMIT 50", [id], function(dbErr, dbRes){
+        console.log(dbRes.rows)
+        res.render("favourites", {
+          favourites: dbRes.rows, username
+        });
+      });
+    }});
+  });
+
+app.post("/search", urlencodedParser, function(req, res){
+  let username = req.session.user;
+  const search = req.body.searchTerm;
+  console.log(search);
+  if(search == ""){
+    res.redirect("/");
+    return;
+  }
+  else{
+    dbClient.query("SELECT * FROM books WHERE title LIKE $1 OR author LIKE $1 OR year = $1 OR isbn LIKE $2 LIMIT 50", ['%'+search+'%', search+'%'], function(dbErr, dbRes){
+      console.log(dbRes);
+      if(dbRes == undefined){
+        console.log(dbErr);
+        res.render("search_results", {error_message: "Nothing found! Try some other term or start Browsing!", username});
+        return;
+      }
+      else if(dbRes.rows.length == 0){
+        res.render("search_results", {error_message: "Nothing found! Try some other term or start Browsing!", username});
+        return;
+      }
+      else{
+        res.render("search_results", {search_results: dbRes.rows, username});
+        return;
+      }
+    });
+  }
+});
+
+
+app.get("/secret", function(req, res){
+  res.render("secret");
+})
+
+app.listen(PORT, function () {
+  console.log(`Shopping App listening on Port ${PORT}`);
+});
+
+
 //FIXIT
 app.get("*", function(req, res){
-  res.send("Error Page not Found");
+  res.render("error", {error_message: "This page does not exist!"})
 });

@@ -1,0 +1,21 @@
+extends layout.pug
+
+block title
+  title Login
+
+block content
+  div(class="row")
+    h1(class="col display-4") Your search results, #{username}
+  br
+  div(class="row" style="border-bottom: 1px solid #343A40")
+  br
+  div(class="row text-center")
+    div(class="col-1")
+    if search_results != undefined
+      div(class="col list-group")
+        each result in search_results
+          a(href="#" class="list-group-item list-group-item-action text-light" style="background-color: #343A40")=result.title
+    else
+      br
+      h3(class="col-8 display-4")=error_message
+    div(class="col-1")

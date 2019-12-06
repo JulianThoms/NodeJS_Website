@@ -4,6 +4,9 @@ block title
   title Login
 
 block content
-  h1 Something went wrong...
-  h1 Please try again
-  a(href="/" class="btn btn-outline-light btn-lg") Return to Home
+  if error_message != undefined
+    h1(class="layout-3")=error_message
+  else
+    h1 Something terrible has happened. Please let the Side-Owner know what you did to see this.
+  br
+  a(href="/" class="btn btn-outline-light btn-lg") Go back to safety
