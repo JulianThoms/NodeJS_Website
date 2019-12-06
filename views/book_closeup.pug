@@ -1,0 +1,33 @@
+extends layout.pug
+
+block title
+  title Login
+
+block content
+  h1(class="display-3")=title
+  br
+  br
+  br
+  div(class="row" style="border-top: 0.1px solid black ")
+
+    div(class="col-6")
+      br
+      br
+      br
+      div(class="list-group" id="list-tab" role="tablist" )
+        a(class="list-group-item list-group-item-action active" id="list-book_title" data-toggle="list" href="#list-book_title_ref" role="tab" aria-controls="home" style="background-color:black") Title
+        br
+        a(class="list-group-item list-group-item-action" id="list-book_author" data-toggle="list" href="#list-book_author_ref" role="tab" aria-controls="profile" style="background-color:black") Author
+        br
+        a(class="list-group-item list-group-item-action" id="list-book_year" data-toggle="list" href="#list-book_year_ref" role="tab" aria-controls="messages" style="background-color:black") Year
+        br
+        a(class="list-group-item list-group-item-action" id="list-book_isbn" data-toggle="list" href="#list-book_isbn_ref" role="tab" aria-controls="settings" style="background-color:black") ISBN
+    div(class="col-6" style="border-left: 0.1px solid black")
+      br
+      br
+      br
+      div(class="tab-content" id="nav-tabContent")
+        div(class="tab-pane fade show active display-3" id="list-book_title_ref" role="tabpanel" aria-labelledby="list-book_title")=title
+        div(class="tab-pane fade display-3" id="list-book_author_ref" role="tabpanel" aria-labelledby="list-book_author")=author
+        div(class="tab-pane fade display-3" id="list-book_year_ref" role="tabpanel" aria-labelledby="list-book_year")=year
+        div(class="tab-pane fade display-3" id="list-book_isbn_ref" role="tabpanel" aria-labelledby="list-book_isbn")=isbn

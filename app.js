@@ -73,12 +73,10 @@ app.get("/signup", function(req, res){
   if(req.session.user != undefined){
     loggedIn = true;
     let username = req.session.user;
-    console.log(loggedIn);
     res.render("signup", {loggedIn, username});
   }
   else{
     loggedIn = false;
-    console.log(loggedIn);
     res.render("signup", {loggedIn});
   }
 });
@@ -171,7 +169,6 @@ app.get("/favourites", function (req, res){
     let id = dbRes.rows[0].id_user;
     if(id != undefined){
       dbClient.query("SELECT books.title FROM (books INNER JOIN users_favourites ON books.id_book = users_favourites.id_book) INNER JOIN users ON users.id_user = users_favourites.id_user WHERE users.id_user = $1 LIMIT 50", [id], function(dbErr, dbRes){
-        console.log(dbRes.rows)
         res.render("favourites", {
           favourites: dbRes.rows, username
         });
@@ -182,14 +179,12 @@ app.get("/favourites", function (req, res){
 app.post("/search", urlencodedParser, function(req, res){
   let username = req.session.user;
   const search = req.body.searchTerm;
-  console.log(search);
   if(search == ""){
     res.redirect("/");
     return;
   }
   else{
     dbClient.query("SELECT * FROM books WHERE title LIKE $1 OR author LIKE $1 OR year = $1 OR isbn LIKE $2 LIMIT 50", ['%'+search+'%', search+'%'], function(dbErr, dbRes){
-      console.log(dbRes);
       if(dbRes == undefined){
         console.log(dbErr);
         res.render("search_results", {error_message: "Nothing found! Try some other term or start Browsing!", username});
@@ -207,6 +202,29 @@ app.post("/search", urlencodedParser, function(req, res){
   }
 });
 
+app.get("/search/:id", function (req, res) {
+    /* List details about a single flight */
+    var bookID = req.params.id;
+
+    dbClient.query("SELECT * FROM books WHERE id_book=$1", [bookID], function (dbErr, dbRes) {
+      if (dbErr != undefined){
+        res.render("error", {error_message: "Error, please try again!"});
+      } else
+        if (dbRes.rows.length == 0) {
+            res.render("error", {
+                error_message: "This book does not exist!"
+            });
+          }
+        else{
+          res.render("book_closeup", {
+              title: dbRes.rows[0].title,
+              year: dbRes.rows[0].year,
+              isbn: dbRes.rows[0].isbn,
+              author: dbRes.rows[0].author
+        }
+      )}
+    });
+  });
 
 app.get("/secret", function(req, res){
   res.render("secret");
