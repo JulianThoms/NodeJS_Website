@@ -53,28 +53,23 @@ app.get("/", function (req, res) {
         res.render("index");
   }
 });
-/*
-app.get("/flights", function (req, res) {
-     List all flights
-    dbClient.query("SELECT * FROM flights", function (dbError, dbResponse) {
-        res.render("flights", {
-            flights: dbResponse.rows
-        });
-    });
-});
-*/
+
 
 app.get("/favourites", function (req, res){
   let favourites = "";
   let username = req.session.user;
-  dbClient.query("SELECT id_user FROM users WHERE name = $1", ['test'], function(dbErr, dbRes){
-    console.log(dbRes.rows[0].id_user)
-    let id = dbRes.rows[0].id_user;
-    if(id != undefined){
-    dbClient.query("SELECT books.title FROM (books INNER JOIN users_favourites ON books.id_book = users_favourites.id_book) INNER JOIN users ON users.id_user = users_favourites.id_user WHERE users.id_user = $1", [id], function(dbErr, dbRes){
-      console.log(dbRes.rows)
-      res.render("favourites", {
-        favourites: dbRes.rows, username
+  dbClient.query("SELECT id_user FROM users WHERE name = $1", ['username'], function(dbErr, dbRes){
+    if(dbRes.rows != 1){
+      //FIXIT
+      res.render("favourites", {favourites: "", username})
+      return;
+    }
+      let id = dbRes.rows[0].id_user;
+      if(id != undefined){
+        dbClient.query("SELECT books.title FROM (books INNER JOIN users_favourites ON books.id_book = users_favourites.id_book) INNER JOIN users ON users.id_user = users_favourites.id_user WHERE users.id_user = $1", [id], function(dbErr, dbRes){
+          console.log(dbRes.rows)
+          res.render("favourites", {
+            favourites: dbRes.rows, username
       });
     });
   }});
@@ -107,26 +102,6 @@ app.get("/signup", function(req, res){
   }
 });
 
-/*
-app.get("/successful_login", function(req, res){
-  if(req.session.user != undefined){
-    res.render("successful_login");
-
-    }
-  else{
-    res.render("login", {error_login: "Please log in to access this Page!"})
-  }
-});
-
-app.get("/successful_logout", function(req, res){
-  if(req.session.user == undefined){
-    res.render("successful_logout");
-  }
-  else{
-    res.render("error")
-  }
-});
-*/
 
 app.post("/signup", urlencodedParser, function(req, res){
   const username = req.body.username;
@@ -135,14 +110,17 @@ app.post("/signup", urlencodedParser, function(req, res){
 
   if(userpassword !== userpassword_check){
     res.render("signup", {error_signup: "Your passwords do not match! Please try again"});
+    return;
   }
   dbClient.query("SELECT * FROM users WHERE name = $1", [username], function(dbErr, dbRes){
     if (dbRes.rows.length > 0){
       res.render("signup", {error_signup: "Username already taken! Please choose a different one"});
+      return;
     }
     else
     dbClient.query("INSERT INTO users (name, password) VALUES ($1, $2)", [username, userpassword], function(dbErr, dbRes){});
     res.redirect("/");
+    return;
   });
 
 });
@@ -154,10 +132,12 @@ app.post("/login", urlencodedParser, function(req, res){
   dbClient.query("SELECT * FROM users WHERE name = $1 AND password = $2", [username, userpassword], function(dbErr, dbRes){
     if(dbRes.rows.length == 0){
       res.render("login", {error_login: "Username or Password wrong!"})
+      return;
     }
     else{
       req.session.user = username;
       res.redirect("/");
+      return;
     }
   });
 });
