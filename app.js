@@ -3,9 +3,6 @@ var pg = require("pg");
 var bodyParser = require("body-parser");
 var session = require("express-session");
 
-global.loggedIn = false;
-global.loggedOut = false;
-
 const CON_STRING = process.env.DB_CON_STRING || "postgres://lqkivzqdzcaalr:78e9f45f9f4195a0fa11636e58447dd83ef914c0626af5ef55c12177af0e1c5b@ec2-54-75-235-28.eu-west-1.compute.amazonaws.com:5432/dc0kk7vjlc3fti";
 if (CON_STRING == undefined) {
   console.log("Error: Environment variable DB_CON_STRING not set!");
@@ -39,45 +36,37 @@ app.set("views", "views");
 app.set("view engine", "pug");
 
 app.get("/", function (req, res) {
+  console.log(req.session)
   if(req.session.user != undefined){
-    loggedIn = true;
-    res.render("index");
-  }
-  else if (loggedOut == true){
-    loggedIn = false;
-    res.render("index");
-    loggedOut = false;
+    req.session.loggedIn = true;
+    res.render("index", {loggedIn: req.session.loggedIn});
   }
   else{
-    loggedIn = false;
-    res.render("index");
+    res.render("index", {loggedIn: false});
   }
 });
 
 
 
 app.get("/login", function(req, res){
+
   if(req.session.user != undefined){
-    loggedIn = true;
     let username = req.session.user;
-    res.render("login", {loggedIn, username});
+    res.render("login", {loggedIn: req.session.loggedIn, username});
   }
   else{
-    loggedIn = false;
-    res.render("login", {loggedIn});
+    res.render("login", {loggedIn: false});
   }
 
 });
 
 app.get("/signup", function(req, res){
   if(req.session.user != undefined){
-    loggedIn = true;
     let username = req.session.user;
-    res.render("signup", {loggedIn, username});
+    res.render("signup", {loggedIn: req.session.loggedIn, username});
   }
   else{
-    loggedIn = false;
-    res.render("signup", {loggedIn});
+    res.render("signup", {loggedIn: false});
   }
 });
 
@@ -96,10 +85,11 @@ app.post("/signup", urlencodedParser, function(req, res){
       res.render("signup", {error_signup: "Username already taken! Please choose a different one"});
       return;
     }
-    else
+    else{
     dbClient.query("INSERT INTO users (name, password) VALUES ($1, $2)", [username, userpassword], function(dbErr, dbRes){});
     res.redirect("/");
     return;
+  }
   });
 
 });
@@ -115,6 +105,7 @@ app.post("/login", urlencodedParser, function(req, res){
     }
     else{
       req.session.user = username;
+      req.session.userID = dbRes.rows[0].id_user;
       res.redirect("/");
       return;
     }
@@ -125,7 +116,6 @@ app.get('/logout', function (req, res) {
   if(req.session.user != undefined)
   {
     req.session.destroy();
-    loggedOut = true;
     res.redirect("/");
   }
   else{
@@ -140,6 +130,7 @@ app.get("/error", function(req, res){
 
 //STOPS LOGGED-OUT PEOPLE FROM ACCESSING BELOW PAGES
 app.get("*", function(req, res, next){
+
   if(req.session.user == undefined){
     res.render("error", {error_message: "You have to be logged in to see this page!"});
   }
@@ -157,25 +148,21 @@ app.post("*", function(req, res, next){
   }
 });
 
+//only logged in people can get/post this hopefully
+
 app.get("/favourites", function (req, res){
   let favourites = "";
   let username = req.session.user;
-  dbClient.query("SELECT id_user FROM users WHERE name = $1", [username], function(dbErr, dbRes){
-    if(dbRes.rows != 1){
-      //FIXIT
-      res.render("favourites", {favourites: "", username})
-      return;
-    }
-    let id = dbRes.rows[0].id_user;
-    if(id != undefined){
-      dbClient.query("SELECT books.title FROM (books INNER JOIN users_favourites ON books.id_book = users_favourites.id_book) INNER JOIN users ON users.id_user = users_favourites.id_user WHERE users.id_user = $1 LIMIT 50", [id], function(dbErr, dbRes){
-        res.render("favourites", {
-          favourites: dbRes.rows,
-          username
-        });
+  let id = req.session.userID;
+  if(id != undefined){
+    dbClient.query("SELECT books.title FROM (books INNER JOIN users_favourites ON books.id_book = users_favourites.id_book) INNER JOIN users ON users.id_user = users_favourites.id_user WHERE users.id_user = $1 LIMIT 50", [id], function(dbErr, dbRes){
+      res.render("favourites", {
+        favourites: dbRes.rows,
+        username,
+        loggedIn: req.session.loggedIn
       });
-    }
-  });
+    });
+  };
 });
 
 app.post("/search", urlencodedParser, function(req, res){
@@ -189,15 +176,15 @@ app.post("/search", urlencodedParser, function(req, res){
     dbClient.query("SELECT * FROM books WHERE title LIKE $1 OR author LIKE $1 OR year = $1 OR isbn LIKE $2 LIMIT 50", ['%'+search+'%', search+'%'], function(dbErr, dbRes){
       if(dbRes == undefined){
         console.log(dbErr);
-        res.render("search_results", {error_message: "Nothing found! Try some other term or start Browsing!", username});
+        res.render("search_results", {error_message: "Nothing found! Try some other term or start Browsing!", username, loggedIn: req.session.loggedIn});
         return;
       }
       else if(dbRes.rows.length == 0){
-        res.render("search_results", {error_message: "Nothing found! Try some other term or start Browsing!", username});
+        res.render("search_results", {error_message: "Nothing found! Try some other term or start Browsing!", username, loggedIn: req.session.loggedIn});
         return;
       }
       else{
-        res.render("search_results", {search_results: dbRes.rows, username});
+        res.render("search_results", {search_results: dbRes.rows, username, loggedIn: req.session.loggedIn});
         return;
       }
     });
@@ -208,11 +195,10 @@ app.post("/search", urlencodedParser, function(req, res){
 app.get("/search/:id", function (req, res) {
   /* List details about a single flight */
   const bookID = req.params.id;
+  req.session.bookID = bookID;
   const userName = req.session.user;
-  let userID;
-  dbClient.query("SELECT id_user FROM users WHERE name=$1", [userName], function (dbErr, dbRes) {
-    userID = dbRes.rows[0].id_user;
-  })
+  const userID = req.session.userID
+
   let reviews;
   let no_reviews = false;
   dbClient.query("SELECT * FROM books WHERE id_book=$1", [bookID], function (dbErr, dbRes) {
@@ -240,15 +226,26 @@ app.get("/search/:id", function (req, res) {
           author: dbRes.rows[0].author,
           id_book: dbRes.rows[0].id_book,
           reviews,
-          no_reviews: no_reviews
+          no_reviews: no_reviews,
+          loggedIn: req.session.loggedIn
         });
       });
     }
   });
 });
 
+  app.post("/addReview", urlencodedParser, function(req, res){
+    userID = req.session.userID;
+    bookID = req.session.bookID;
+    review = req.body.userReview;
+    dbClient.query("INSERT INTO users_reviews(id_user, id_book, review) VALUES($1, $2, $3)", [userID, bookID, review], function(dbErr, dbRes){
+      console.log(dbErr);
+      res.redirect("/search/"+bookID);
+    });
+  });
+
   app.get("/secret", function(req, res){
-    res.render("secret");
+    res.render("secret", {loggedIn: req.session.loggedIn});
   })
 
   app.listen(PORT, function () {
@@ -258,5 +255,5 @@ app.get("/search/:id", function (req, res) {
 
   //FIXIT
   app.get("*", function(req, res){
-    res.render("error", {error_message: "This page does not exist!"})
+    res.render("error", {error_message: "This page does not exist!", loggedIn: req.session.loggedIn})
   });

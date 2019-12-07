@@ -31,9 +31,9 @@ block content
         div(class="tab-pane fade display-3" id="user-review-ref" role="tabpanel" aria-labelledby="user-review")
           div(class="row d-flex justify-content-center")
             div(class="col-10")
-              form(action="#" method="post" class="form-group")
+              form(action="/addReview" method="post" class="form-group")
                 textarea(type="text" name="userReview" maxlength="512" class="form-control" rows="4" style="background-color:#484d53; color:white; border:none")
-                button(type="button" class="btn btn-block mt-3" style="background-color:#343A40; color: white; border:none") Submit!
+                button(type="submit" class="btn btn-block mt-3" style="background-color:#343A40; color: white; border:none") Submit!
         div(class="tab-pane fade display-4" id="get-review-ref" role="tabpanel" aria-labelledby="get-review" style="border: none")
           if reviews != undefined
             each review in reviews
