@@ -4,30 +4,34 @@ block title
   title Login
 
 block content
-  h1(class="display-3")=title
-  br
-  br
-  br
-  div(class="row" style="border-top: 0.1px solid black ")
+  h1(class="display-3 mb-5")=title
 
-    div(class="col-6")
-      br
-      br
-      br
-      div(class="list-group" id="list-tab" role="tablist" )
-        a(class="list-group-item list-group-item-action active" id="list-book_title" data-toggle="list" href="#list-book_title_ref" role="tab" aria-controls="home" style="background-color:black") Title
+  div(class="row d-none d-sm-block" style="border-top : 1.1px solid #343A40; border-bottom : 1.1px solid #343A40")
+    div(class="d-inline")
+
+      div(class="list-group mt-5"  id="list-tab" role="tablist")
+        a(class="list-group-item list-group-item-action active" id="list-book_author" data-toggle="list" href="#list-book_author_ref" role="tab" aria-controls="profile" style="background-color:#343A40; color: #eaebeb") Author
         br
-        a(class="list-group-item list-group-item-action" id="list-book_author" data-toggle="list" href="#list-book_author_ref" role="tab" aria-controls="profile" style="background-color:black") Author
+        a(class="list-group-item list-group-item-action" id="list-book_year" data-toggle="list" href="#list-book_year_ref" role="tab" aria-controls="messages" style="background-color:#343A40; color: #eaebeb") Year
         br
-        a(class="list-group-item list-group-item-action" id="list-book_year" data-toggle="list" href="#list-book_year_ref" role="tab" aria-controls="messages" style="background-color:black") Year
+        a(class="list-group-item list-group-item-action" id="list-book_isbn" data-toggle="list" href="#list-book_isbn_ref" role="tab" aria-controls="settings" style="background-color:#343A40; color: #eaebeb") ISBN
         br
-        a(class="list-group-item list-group-item-action" id="list-book_isbn" data-toggle="list" href="#list-book_isbn_ref" role="tab" aria-controls="settings" style="background-color:black") ISBN
-    div(class="col-6" style="border-left: 0.1px solid black")
-      br
-      br
-      br
-      div(class="tab-content" id="nav-tabContent")
-        div(class="tab-pane fade show active display-3" id="list-book_title_ref" role="tabpanel" aria-labelledby="list-book_title")=title
-        div(class="tab-pane fade display-3" id="list-book_author_ref" role="tabpanel" aria-labelledby="list-book_author")=author
+        a(class="list-group-item list-group-item-action" id="user-review" data-toggle="list" href="#user-review-ref" role="tab" aria-controls="home" style="background-color:#343A40; color: #eaebeb") Write Review
+        br
+        a(class="list-group-item list-group-item-action" id="get-review" data-toggle="list" href="#get-review-ref" role="tab" aria-controls="home" style="background-color:#343A40; color: #eaebeb") Read Reviews
+
+    div(class="d-inline mb-5" style="")
+
+      div(class="tab-content my-5" id="nav-tabContent ")
+        div(class="tab-pane fade show active display-3" id="list-book_author_ref" role="tabpanel" aria-labelledby="list-book_author")=author
         div(class="tab-pane fade display-3" id="list-book_year_ref" role="tabpanel" aria-labelledby="list-book_year")=year
         div(class="tab-pane fade display-3" id="list-book_isbn_ref" role="tabpanel" aria-labelledby="list-book_isbn")=isbn
+        div(class="tab-pane fade display-3" id="user-review-ref" role="tabpanel" aria-labelledby="user-review")
+          div(class="row d-flex justify-content-center")
+            div(class="col-10")
+              form(action="#" method="post" class="form-group")
+                textarea(type="text" name="userReview" maxlength="512" class="form-control" rows="4" style="background-color:#484d53; color:white; border:none")
+                button(type="button" class="btn btn-block mt-3" style="background-color:#343A40; color: white; border:none") Submit!
+        div(class="tab-pane fade display-3" id="get-review-ref" role="tabpanel" aria-labelledby="get-review")
+          ul
+            

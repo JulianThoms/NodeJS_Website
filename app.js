@@ -6,7 +6,7 @@ var session = require("express-session");
 global.loggedIn = false;
 global.loggedOut = false;
 
-const CON_STRING = process.env.DB_CON_STRING;
+const CON_STRING = process.env.DB_CON_STRING || "postgres://lqkivzqdzcaalr:78e9f45f9f4195a0fa11636e58447dd83ef914c0626af5ef55c12177af0e1c5b@ec2-54-75-235-28.eu-west-1.compute.amazonaws.com:5432/dc0kk7vjlc3fti";
 if (CON_STRING == undefined) {
   console.log("Error: Environment variable DB_CON_STRING not set!");
   process.exit(1);
