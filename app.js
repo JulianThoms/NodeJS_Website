@@ -36,7 +36,6 @@ app.set("views", "views");
 app.set("view engine", "pug");
 
 app.get("/", function (req, res) {
-  console.log(req.session)
   if(req.session.user != undefined){
     req.session.loggedIn = true;
     res.render("index", {loggedIn: req.session.loggedIn});
@@ -185,7 +184,6 @@ app.post("/search", urlencodedParser, function(req, res){
   else{
     dbClient.query("SELECT * FROM books WHERE title LIKE $1 OR author LIKE $1 OR year = $1 OR isbn LIKE $2 LIMIT 50", ['%'+search+'%', search+'%'], function(dbErr, dbRes){
       if(dbRes == undefined){
-        console.log(dbErr);
         res.render("search_results", {error_message: "Nothing found! Try some other term or start Browsing!", username, loggedIn: req.session.loggedIn});
         return;
       }
@@ -233,7 +231,6 @@ app.get("/search/:id", function (req, res) {
           reviewed = true;
         }});
       dbClient.query("SELECT users_reviews.review, users.name FROM users_reviews INNER JOIN users ON users_reviews.id_user = users.id_user WHERE users_reviews.id_book=$1 AND users.id_user=$2", [bookID, userID], function (dbErrReview, dbResReview) {
-        console.log(dbResReview)
         if(dbResReview.rows.length == 0){
           no_reviews = true;
         }
@@ -263,7 +260,6 @@ app.get("/search/:id", function (req, res) {
     review = req.body.userReview;
     if(review !=  ""){
     dbClient.query("INSERT INTO users_reviews(id_user, id_book, review) VALUES($1, $2, $3)", [userID, bookID, review], function(dbErr, dbRes){
-      console.log(dbErr);
       res.redirect("/search/"+bookID);
     });
   }});
