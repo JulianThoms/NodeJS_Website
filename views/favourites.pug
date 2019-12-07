@@ -4,11 +4,14 @@ block title
   title Favourites
 
 block content
-  div(class="row")
-    h1(class="col-10 display-4") Your favourites, #{username}
+  div(class="row justify-content-center")
+    h1(class="col-12 display-4") Your favourites, #{username}
   br
   br
-  div(class="row text-center ")
-    div(class="col-6 list-group")
+  div(class="row align-items-center")
+    if favourites != undefined
       each favourite in favourites
-        a(href="/search/"+favourite.id_book class="list-group-item list-group-item-action bg-primary text-light")=favourite.title
+        div(class="col-8")
+          a(href="/search/"+favourite.id_book class="list-group-item list-group-item-action text-light" style="background-color: #343A40")=favourite.title
+        div(class="col-4")
+          button(type="submit" class="btn" style="background-color:#40343a; color:white; border: none") Remove from Favourites
