@@ -5,13 +5,14 @@ block title
 
 block content
   div(class="row justify-content-center")
-    h1(class="col-12 display-4") Your favourites, #{username}
-  br
-  br
+    h1(class="display-3") Favourites
+    
+  div(class="row my-5" style="border-bottom: 1px solid #343A40")
+
   div(class="row align-items-center")
     if favourites != undefined
       each favourite in favourites
         div(class="col-8")
-          a(href="/search/"+favourite.id_book class="list-group-item list-group-item-action text-light" style="background-color: #343A40")=favourite.title
+          a(href="/search/"+favourite.id_book class="list-group-item list-group-item-action text-light btn btn-block" style="background-color: #343A40")=favourite.title
         div(class="col-4")
-          button(type="submit" class="btn" style="background-color:#40343a; color:white; border: none") Remove from Favourites
+          button(type="submit" class="btn btn-block" style="background-color:#40343a; color:white; border: none") Remove

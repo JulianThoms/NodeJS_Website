@@ -4,13 +4,16 @@ block title
   title=title
 
 block content
-  h1(class="display-3 mb-5")=title
-  if !isFavourite
-    form(action="/addFavourite" method="post" class="form-group")
-      button(type="submit" class="btn btn-block" style="background-color:#34403a; color:white; border: none") Add to Favourites
-  if isFavourite
-    form(action="/removeFavourite" method="post" class="form-group")
-      button(type="submit" class="btn btn-block" style="background-color:#40343a; color:white; border: none") Remove from Favourites
+  div(class="row justify-content-center")
+    h1(class="display-3")=title
+  div(class="row my-5" style="border-bottom: 1px solid #343A40")
+  div(class="content-center")  
+    if !isFavourite
+      form(action="/addFavourite" method="post" class="form-group")
+        button(type="submit" class="btn btn-block" style="background-color:#34403a; color:white; border: none") Add to Favourites
+    if isFavourite
+      form(action="/removeFavourite" method="post" class="form-group")
+        button(type="submit" class="btn btn-block" style="background-color:#40343a; color:white; border: none") Remove from Favourites
   div(class="row d-none d-sm-block" style="border-top : 1.1px solid #343A40; border-bottom : 1px solid #343A40")
     div(class="")
 

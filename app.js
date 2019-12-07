@@ -75,19 +75,21 @@ app.post("/signup", urlencodedParser, function(req, res){
   const username = req.body.username;
   const userpassword = req.body.password;
   const userpassword_check = req.body.password_check;
+  const email = req.body.email;
+  const security_question = req.body.security_question;
 
   if(userpassword !== userpassword_check){
     res.render("signup", {error_signup: "Your passwords do not match! Please try again"});
     return;
   }
-  dbClient.query("SELECT * FROM users WHERE name = $1", [username], function(dbErr, dbRes){
+  dbClient.query("SELECT * FROM users WHERE name = $1 OR email = $2", [username, email], function(dbErr, dbRes){
     if (dbRes.rows.length > 0){
       res.render("signup", {error_signup: "Username already taken! Please choose a different one"});
       return;
     }
     else{
-    dbClient.query("INSERT INTO users (name, password, ) VALUES ($1, $2)", [username, userpassword], function(dbErr, dbRes){});
-    res.redirect("/");
+    dbClient.query("INSERT INTO users (name, password, answer_passwort_reset, email) VALUES ($1, $2, $3, $4)", [username, userpassword, security_question, email], function(dbErr, dbRes){});
+    res.redirect("/login");
     return;
   }
   });
@@ -111,6 +113,13 @@ app.post("/login", urlencodedParser, function(req, res){
     }
   });
 });
+
+app.get('/forgotPassword', function(req, res){
+  if(req.session.user == undefined)
+  {
+    res.render("forgotPassword");
+  }
+})
 
 app.get('/logout', function (req, res) {
   if(req.session.user != undefined)

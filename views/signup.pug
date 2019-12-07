@@ -5,33 +5,40 @@ block title
 
 block content
   div(class="row text-center h-100")
-  
+    br
+    br
     div(class="col-2")
     
     div(class="col-8 align-self-center justify-content-center")
-      br
-      br
       if loggedIn
         h1(class="text-muted") Sign Up
-        br
+        
+        div(class="row my-5" style="border-bottom: 1px solid #343A40")
+        
         h1(class="display-4") You are already logged in
         h1(class="display-2") #{username}
         br
         button(type="submit", class="btn btn-outline-light btn-lg") Logout
       else
-        h1 Sign Up
-        br
+        h1(class="display-3") Sign Up
+
+        div(class="row my-5" style="border-bottom: 1px solid #343A40")
+
         form(action="/signup" method="post" class="form-signin")
           div(class="form-group")
             input(type="text", class="form-control", id="inputUsername", placeholder="Username", name="username")
           div(class="form-group")
+            input(type="email", class="form-control", id="inputEmail", placeholder="Email", name="email")
+          br
+          div(class="form-group")
             input(type="password", class="form-control", id="inputPassword" placeholder="Password", name="password")
           div(class="form-group")
             input(type="password", class="form-control", id="inputPassword_check" placeholder="Repeat Password", name="password_check")
+          br
           div(class="form-group")
-            input(type="password", class="form-control", id="inputPassword_check" placeholder="Security Question: Your favourite animal?", name="security_question")
+            input(type="password", class="form-control", id="security_question" placeholder="Security Question: Your favourite animal?", name="security_question")
           div(class="form-group")
-            button(type="submit", class="btn btn-primary") Create new Account
+            button(type="submit", class="btn btn-primary btn-block") Create new Account
         br
         if error_signup != null  
           div(class="alert alert-warning") #{error_signup}
