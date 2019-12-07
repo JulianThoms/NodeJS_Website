@@ -86,7 +86,7 @@ app.post("/signup", urlencodedParser, function(req, res){
       return;
     }
     else{
-    dbClient.query("INSERT INTO users (name, password) VALUES ($1, $2)", [username, userpassword], function(dbErr, dbRes){});
+    dbClient.query("INSERT INTO users (name, password, ) VALUES ($1, $2)", [username, userpassword], function(dbErr, dbRes){});
     res.redirect("/");
     return;
   }
@@ -152,10 +152,11 @@ app.post("*", function(req, res, next){
 
 app.get("/favourites", function (req, res){
   let favourites = "";
+
   let username = req.session.user;
   let id = req.session.userID;
   if(id != undefined){
-    dbClient.query("SELECT books.title FROM (books INNER JOIN users_favourites ON books.id_book = users_favourites.id_book) INNER JOIN users ON users.id_user = users_favourites.id_user WHERE users.id_user = $1 LIMIT 50", [id], function(dbErr, dbRes){
+    dbClient.query("SELECT books.title, books.id_book FROM (books INNER JOIN users_favourites ON books.id_book = users_favourites.id_book) INNER JOIN users ON users.id_user = users_favourites.id_user WHERE users.id_user = $1 LIMIT 50", [id], function(dbErr, dbRes){
       res.render("favourites", {
         favourites: dbRes.rows,
         username,
@@ -198,9 +199,15 @@ app.get("/search/:id", function (req, res) {
   req.session.bookID = bookID;
   const userName = req.session.user;
   const userID = req.session.userID
-
+  let isFavourite = false;
   let reviews;
   let no_reviews = false;
+  //checks if book exists
+  dbClient.query("SELECT * FROM users_favourites WHERE id_book = $1 AND id_user = $2", [bookID, userID], function(dbErrLookupIfFavourite, dbResLookupIfFavourite){
+    if (dbResLookupIfFavourite.rows.length != 0){
+      isFavourite = true;
+  }});
+
   dbClient.query("SELECT * FROM books WHERE id_book=$1", [bookID], function (dbErr, dbRes) {
     if (dbErr != undefined){
       res.render("error", {error_message: "Error, please try again!"});
@@ -211,6 +218,11 @@ app.get("/search/:id", function (req, res) {
       });
     }
     else{
+      let reviewed = false;
+      dbClient.query("SELECT * FROM users_reviews WHERE id_user = $1 AND id_book = $2", [userID, bookID], function (dbErrReviewDupCheck, dbResReviewDupCheck) {
+        if(dbResReviewDupCheck.rows.length != 0){
+          reviewed = true;
+        }});
       dbClient.query("SELECT users_reviews.review, users.name FROM users_reviews INNER JOIN users ON users_reviews.id_user = users.id_user WHERE users_reviews.id_book=$1 AND users.id_user=$2", [bookID, userID], function (dbErrReview, dbResReview) {
         console.log(dbResReview)
         if(dbResReview.rows.length == 0){
@@ -227,7 +239,9 @@ app.get("/search/:id", function (req, res) {
           id_book: dbRes.rows[0].id_book,
           reviews,
           no_reviews: no_reviews,
-          loggedIn: req.session.loggedIn
+          loggedIn: req.session.loggedIn,
+          reviewed,
+          isFavourite
         });
       });
     }
@@ -238,22 +252,64 @@ app.get("/search/:id", function (req, res) {
     userID = req.session.userID;
     bookID = req.session.bookID;
     review = req.body.userReview;
+    if(review !=  ""){
     dbClient.query("INSERT INTO users_reviews(id_user, id_book, review) VALUES($1, $2, $3)", [userID, bookID, review], function(dbErr, dbRes){
       console.log(dbErr);
       res.redirect("/search/"+bookID);
     });
-  });
+  }});
 
   app.get("/secret", function(req, res){
     res.render("secret", {loggedIn: req.session.loggedIn});
   })
 
-  app.listen(PORT, function () {
-    console.log(`Shopping App listening on Port ${PORT}`);
-  });
+
+  app.post("/addFavourite", urlencodedParser, function(req, res){
+    userID = req.session.userID;
+    bookID = req.session.bookID;
+    dbClient.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck){
+      if(dbResDupCheck.rows.length == 0){
+        dbClient.query("INSERT INTO users_favourites(id_user, id_book) VALUES($1, $2)", [userID, bookID], function(dbErr, dbRes){
+          if(dbErr == undefined){
+            res.redirect("/search/"+bookID);
+          }
+          else{
+            res.redirect("/error", 500);
+          }
+    })
+    }
+  })
+});
+
+app.post("/removeFavourite", urlencodedParser, function(req, res){
+  userID = req.session.userID;
+  bookID = req.session.bookID;
+  dbClient.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck){
+    if(dbResDupCheck.rows.length == 1){
+      dbClient.query("DELETE FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErr, dbRes){
+        if(dbErr == undefined){
+          res.redirect("/search/"+bookID);
+        }
+        else{
+          res.redirect("/error", 500);
+        }
+  })
+  }
+})
+});
 
 
-  //FIXIT
-  app.get("*", function(req, res){
-    res.render("error", {error_message: "This page does not exist!", loggedIn: req.session.loggedIn})
-  });
+//Catches wrong pages
+app.get("*", function(req, res){
+  res.render("error", {error_message: "This page does not exist!", loggedIn: req.session.loggedIn})
+});
+
+
+
+
+
+//END OF GET/POST
+
+app.listen(PORT, function () {
+  console.log(`Shopping App listening on Port ${PORT}`);
+});

@@ -1,7 +1,7 @@
 extends layout.pug
 
 block title
-  title Login
+  title Favourites
 
 block content
   div(class="row")
@@ -11,4 +11,4 @@ block content
   div(class="row text-center ")
     div(class="col-6 list-group")
       each favourite in favourites
-        a(href="/search/"+bookdid class="list-group-item list-group-item-action bg-primary text-light")=favourite.title
+        a(href="/search/"+favourite.id_book class="list-group-item list-group-item-action bg-primary text-light")=favourite.title
