@@ -2,6 +2,8 @@ var express = require("express");
 var pg = require("pg");
 var bodyParser = require("body-parser");
 var session = require("express-session");
+const bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 const CON_STRING = process.env.DB_CON_STRING || "postgres://lqkivzqdzcaalr:78e9f45f9f4195a0fa11636e58447dd83ef914c0626af5ef55c12177af0e1c5b@ec2-54-75-235-28.eu-west-1.compute.amazonaws.com:5432/dc0kk7vjlc3fti";
 if (CON_STRING == undefined) {
@@ -22,7 +24,7 @@ const PORT = 3000;
 var app = express();
 
 app.use(session({
-  secret: "This is a secret!",
+  secret: "dwai2§dkjwao210dwkalcklxkd3d013ie2kdlkwla4i29keedlkccvoit32011",
   resave:true,
   cookie: { maxAge: 3600000 }, //time in millisecs before cookie expires
   saveUninitialized: false
@@ -50,8 +52,7 @@ app.get("/", function (req, res) {
 app.get("/login", function(req, res){
 
   if(req.session.user != undefined){
-    let username = req.session.user;
-    res.render("login", {loggedIn: req.session.loggedIn, username});
+    res.render("login", {loggedIn: req.session.loggedIn, username: req.session.user});
   }
   else{
     res.render("login", {loggedIn: false});
@@ -61,8 +62,7 @@ app.get("/login", function(req, res){
 
 app.get("/signup", function(req, res){
   if(req.session.user != undefined){
-    let username = req.session.user;
-    res.render("signup", {loggedIn: req.session.loggedIn, username});
+    res.render("signup", {loggedIn: req.session.loggedIn, username: req.session.user});
   }
   else{
     res.render("signup", {loggedIn: false});
@@ -87,7 +87,10 @@ app.post("/signup", urlencodedParser, function(req, res){
       return;
     }
     else{
-    dbClient.query("INSERT INTO users (name, password, answer_passwort_reset, email) VALUES ($1, $2, $3, $4)", [username, userpassword, security_question, email], function(dbErr, dbRes){});
+      //this hashes password
+      bcrypt.hash(userpassword, saltRounds, function(err, hash) {
+        dbClient.query("INSERT INTO users (name, password, answer_passwort_reset, email) VALUES ($1, $2, $3, $4)", [username, hash, security_question, email], function(dbErr, dbRes){});
+      });
     res.redirect("/login");
     return;
   }
@@ -97,19 +100,25 @@ app.post("/signup", urlencodedParser, function(req, res){
 
 app.post("/login", urlencodedParser, function(req, res){
   const username = req.body.username;
+  let userID;
   const userpassword = req.body.password;
+  let hash;
+  dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [username], function(dbErr, dbRes){
+    hash = dbRes.rows[0].password;
+    userID = dbRes.rows[0].id_user;
 
-  dbClient.query("SELECT * FROM users WHERE name = $1 AND password = $2", [username, userpassword], function(dbErr, dbRes){
-    if(dbRes.rows.length == 0){
+  bcrypt.compare(userpassword, hash, function(errComp, resComp) {
+    if(!resComp){
       res.render("login", {error_login: "Username or Password wrong!"})
       return;
     }
     else{
-      req.session.user = username;
       req.session.userID = dbRes.rows[0].id_user;
+      req.session.user = username;
       res.redirect("/");
       return;
     }
+  });
   });
 });
 
