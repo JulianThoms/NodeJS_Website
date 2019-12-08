@@ -1,11 +1,11 @@
 extends layout.pug
 
 block title
-  title=title
+  title=book.title
 
 block content
   div(class="row justify-content-center")
-    h1(class="display-3")=title
+    h1(class="display-3")=book.title
   div(class="row my-5" style="border-bottom: 1px solid #343A40")
   div(class="content-center")  
     if !isFavourite
@@ -33,9 +33,9 @@ block content
     div(class="mt-5" style="border-top: 1px solid #343A40")
 
       div(class="tab-content my-5" id="nav-tabContent ")
-        div(class="tab-pane fade show active display-3" id="list-book_author_ref" role="tabpanel" aria-labelledby="list-book_author")=author
-        div(class="tab-pane fade display-3" id="list-book_year_ref" role="tabpanel" aria-labelledby="list-book_year")=year
-        div(class="tab-pane fade display-3" id="list-book_isbn_ref" role="tabpanel" aria-labelledby="list-book_isbn")=isbn
+        div(class="tab-pane fade show active display-3" id="list-book_author_ref" role="tabpanel" aria-labelledby="list-book_author")=book.author
+        div(class="tab-pane fade display-3" id="list-book_year_ref" role="tabpanel" aria-labelledby="list-book_year")=book.year
+        div(class="tab-pane fade display-3" id="list-book_isbn_ref" role="tabpanel" aria-labelledby="list-book_isbn")=book.isbn
         if reviewed
           div(class="tab-pane fade display-3" id="user-review-ref" role="tabpanel" aria-labelledby="user-review") You have already reviewed this book!
         else

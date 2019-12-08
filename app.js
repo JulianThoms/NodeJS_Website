@@ -3,6 +3,7 @@ var pg = require("pg");
 var bodyParser = require("body-parser");
 var session = require("express-session");
 const bcrypt = require('bcrypt');
+var bookLookup = require('google-books-search');
 const saltRounds = 10;
 
 const CON_STRING = process.env.DB_CON_STRING || "postgres://lqkivzqdzcaalr:78e9f45f9f4195a0fa11636e58447dd83ef914c0626af5ef55c12177af0e1c5b@ec2-54-75-235-28.eu-west-1.compute.amazonaws.com:5432/dc0kk7vjlc3fti";
@@ -40,7 +41,7 @@ app.set("view engine", "pug");
 app.get("/", function (req, res) {
   if(req.session.user != undefined){
     req.session.loggedIn = true;
-    res.render("index", {loggedIn: req.session.loggedIn});
+    res.render("index", {loggedIn: req.session.loggedIn, user: req.session.user});
   }
   else{
     res.render("index", {loggedIn: false});
@@ -167,6 +168,15 @@ app.post("*", function(req, res, next){
 
 //only logged in people can get/post this hopefully
 
+app.get("/browse", function(req, res){
+  
+  dbClient.query("SELECT * FROM books TABLESAMPLE SYSTEM (5)", function(dbErr, dbRes){
+      res.render("browse", {
+        books: dbRes.rows
+      })
+  })
+})
+
 app.get("/favourites", function (req, res){
   let favourites = "";
 
@@ -226,13 +236,11 @@ app.get("/search/:id", function (req, res) {
 
   dbClient.query("SELECT * FROM books WHERE id_book=$1", [bookID], function (dbErr, dbRes) {
     if (dbErr != undefined){
-      res.render("error", {error_message: "Error, please try again!"});
+      res.redirect("/error");
     } else
     if (dbRes.rows.length == 0) {
-      res.render("error", {
-        error_message: "This book does not exist!"
-      });
-    }
+      res.redirect("/error");
+      }
     else{
       let reviewed = false;
       dbClient.query("SELECT * FROM users_reviews WHERE id_user = $1 AND id_book = $2", [userID, bookID], function (dbErrReviewDupCheck, dbResReviewDupCheck) {
@@ -247,11 +255,8 @@ app.get("/search/:id", function (req, res) {
           reviews = dbResReview.rows;
         }
         res.render("book_closeup", {
-          title: dbRes.rows[0].title,
-          year: dbRes.rows[0].year,
-          isbn: dbRes.rows[0].isbn,
-          author: dbRes.rows[0].author,
           id_book: dbRes.rows[0].id_book,
+          book: dbRes.rows[0],
           reviews,
           no_reviews: no_reviews,
           loggedIn: req.session.loggedIn,
