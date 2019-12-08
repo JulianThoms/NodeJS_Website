@@ -1,1 +1,2 @@
-ok I managed to do it, let's start coding :)
+A webpage using Node.JS with Express, PUG, BCrypt, sessions.
+Connected to a PostGreSQL Database.
