@@ -80,12 +80,12 @@ app.post("/signup", urlencodedParser, function(req, res){
 
   if(userpassword !== userpassword_check){
     res.render("signup", {error_signup: "Your passwords do not match! Please try again"});
-    return;
+
   }
   dbClient.query("SELECT * FROM users WHERE name = $1 OR email = $2", [username, email], function(dbErr, dbRes){
     if (dbRes.rows.length > 0){
       res.render("signup", {error_signup: "Username already taken! Please choose a different one"});
-      return;
+
     }
     else{
       //this hashes password
@@ -93,7 +93,7 @@ app.post("/signup", urlencodedParser, function(req, res){
         dbClient.query("INSERT INTO users (name, password, answer_passwort_reset, email) VALUES ($1, $2, $3, $4)", [username, hash, security_question, email], function(dbErr, dbRes){});
       });
     res.redirect("/login");
-    return;
+
   }
   });
 
@@ -105,22 +105,23 @@ app.post("/login", urlencodedParser, function(req, res){
   const userpassword = req.body.password;
   let hash;
   dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [username], function(dbErr, dbRes){
+    if(username == "" || dbRes.rows.length == 0 || dbErr != undefined) {res.render("login", {error_login: "Username or Password wrong!"})}
+    else{
     hash = dbRes.rows[0].password;
     userID = dbRes.rows[0].id_user;
 
   bcrypt.compare(userpassword, hash, function(errComp, resComp) {
     if(!resComp){
       res.render("login", {error_login: "Username or Password wrong!"})
-      return;
+
     }
     else{
       req.session.userID = dbRes.rows[0].id_user;
       req.session.user = username;
       res.redirect("/");
-      return;
     }
   });
-  });
+}});
 });
 
 app.get('/forgotPassword', function(req, res){
@@ -134,7 +135,7 @@ app.get('/logout', function (req, res) {
   if(req.session.user != undefined)
   {
     req.session.destroy();
-    res.redirect("/");
+    res.render("index", {loggedOut: true})
   }
   else{
     res.redirect("/");
@@ -168,14 +169,25 @@ app.post("*", function(req, res, next){
 
 //only logged in people can get/post this hopefully
 
+
 app.get("/browse", function(req, res){
-  
+
   dbClient.query("SELECT * FROM books TABLESAMPLE SYSTEM (5)", function(dbErr, dbRes){
       res.render("browse", {
-        books: dbRes.rows
+        books: dbRes.rows,
+        loggedIn: req.session.loggedIn
       })
   })
 })
+
+app.get("/account", function(req, res){
+
+
+  res.render("account", {
+      loggedIn: req.session.loggedIn,
+      username: req.session.name
+  })
+});
 
 app.get("/favourites", function (req, res){
   let favourites = "";
@@ -198,21 +210,21 @@ app.post("/search", urlencodedParser, function(req, res){
   const search = req.body.searchTerm;
   if(search == ""){
     res.redirect("/");
-    return;
+
   }
   else{
     dbClient.query("SELECT * FROM books WHERE title LIKE $1 OR author LIKE $1 OR year = $1 OR isbn LIKE $2 LIMIT 50", ['%'+search+'%', search+'%'], function(dbErr, dbRes){
       if(dbRes == undefined){
         res.render("search_results", {error_message: "Nothing found! Try some other term or start Browsing!", username, loggedIn: req.session.loggedIn});
-        return;
+
       }
       else if(dbRes.rows.length == 0){
         res.render("search_results", {error_message: "Nothing found! Try some other term or start Browsing!", username, loggedIn: req.session.loggedIn});
-        return;
+
       }
       else{
         res.render("search_results", {search_results: dbRes.rows, username, loggedIn: req.session.loggedIn});
-        return;
+
       }
     });
   }
@@ -277,10 +289,6 @@ app.get("/search/:id", function (req, res) {
       res.redirect("/search/"+bookID);
     });
   }});
-
-  app.get("/secret", function(req, res){
-    res.render("secret", {loggedIn: req.session.loggedIn});
-  })
 
 
   app.post("/addFavourite", urlencodedParser, function(req, res){

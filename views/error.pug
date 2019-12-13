@@ -4,10 +4,10 @@ block title
   title Login
 
 block content
-  br
-  br
+  div(class="row justify-content-center")
+    img(src="/images/not_found.png" style="height:30%; width:30%")
   if error_message != undefined
-    h1(class="layout-3")=error_message
+    h1(class="display-4")=error_message
   else
     h1 Something terrible has happened. Please let the Side-Owner know what you did to see this.
   br

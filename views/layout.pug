@@ -1,5 +1,5 @@
 doctype html
-html
+html(style="overflow-y: scroll")
   -var headercolor = "#343A40";
   head
     meta(charset="UTF-8")
@@ -25,11 +25,12 @@ html
             else
               li(class="nav-item")
                 a(href="/logout" class="nav-link") Logout
-              li(class="nav-item")
-                a(href="/favourites" class="nav-link") Favourites
           if loggedIn
-            div(class="navbar-nav")
-              a(href="/profile" class="nav-link") Account
+            div(class="navbar-nav mr-2")
+              a(href="/browse" class="nav-link") Browse
+              a(href="/favourites" class="nav-link") Favourites
+              a(href="/account" class="nav-link") Account
+
             
           form(class="form-inline mt-2 mt-md-0" action="/search" method="post")
             input(class="form-control mr-sm-2" type="search" name="searchTerm" placeholder="Search" aria-label="Search" required)
@@ -37,12 +38,6 @@ html
 
     br
     div(class="container text-center justify-content-center")
-      if loggedOut
-        div(class="alert alert-warning alert-dismissible fade show" role="alert")
-          strong You've successfully logged out!
-          p We hope to see you back soon!
-          button(type="button" class="close" data-dismiss="alert" aria-label="Close")
-            span(aria-hidden="true") &times;
       br      
       block content
       

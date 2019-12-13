@@ -26,17 +26,18 @@ block content
 
         form(action="/signup" method="post" class="form-signin")
           div(class="form-group")
-            input(type="text", class="form-control", id="inputUsername", placeholder="Username", name="username" required)
+            input(type="text", class="form-control text-light bg-dark", id="inputUsername", placeholder="Username", name="username" required)
           div(class="form-group")
-            input(type="email", class="form-control", id="inputEmail", placeholder="Email", name="email" required)
+            input(type="email", class="form-control text-light bg-dark", id="inputEmail", placeholder="Email", name="email" required)
           br
           div(class="form-group")
-            input(type="password", class="form-control", id="inputPassword" placeholder="Password", name="password" required)
+            input(type="password", class="form-control text-light bg-dark", id="inputPassword" placeholder="Password", name="password" required)
           div(class="form-group")
-            input(type="password", class="form-control", id="inputPassword_check" placeholder="Repeat Password", name="password_check" required)
+            input(type="password", class="form-control text-light bg-dark", id="inputPassword_check" placeholder="Repeat Password", name="password_check" required)
           br
           div(class="form-group")
-            input(type="password", class="form-control", id="security_question" placeholder="Security Question: Your favourite animal?", name="security_question" required)
+            input(type="password", class="form-control text-light bg-dark", id="security_question" placeholder="Security Question: Your favourite animal?", name="security_question" required)
+          br
           div(class="form-group")
             button(type="submit", class="btn btn-primary btn-block") Create new Account
         br
