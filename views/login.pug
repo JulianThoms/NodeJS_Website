@@ -32,6 +32,8 @@ block content
             a(href="/forgotPassword" type="submit", class="btn btn-info btn-block") Forgot Password?
           if error_login != undefined  
             div(class="alert alert-warning") #{error_login}
+          if passwordUpdated
+            div(class="alert alert-success") Updated Password Successfully!
     div(class="col-2")
 
       
