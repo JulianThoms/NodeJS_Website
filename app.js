@@ -50,7 +50,9 @@ app.get("/", function (req, res) {
   }
 });
 
-
+app.get("/impressum", function(req, res){
+  res.render("impressum");
+});
 
 app.get("/login", function(req, res){
 
@@ -60,7 +62,6 @@ app.get("/login", function(req, res){
   else{
     res.render("login", {loggedIn: false});
   }
-
 });
 
 app.get("/signup", function(req, res){
@@ -84,31 +85,27 @@ app.post("/signup", urlencodedParser, function(req, res){
     res.render("signup", {error_signup: "Your passwords do not match! Please try again"});
 
   }
-  dbClient.query("SELECT * FROM users WHERE name = $1 OR email = $2", [username, email], function(dbErr, dbRes){
-    if (dbRes.rows.length > 0){
-      res.render("signup", {error_signup: "Username already taken! Please choose a different one"});
-
-    }
-    else{
-      //this hashes password
-      bcrypt.hash(userpassword, saltRounds, function(err, hash) {
-        dbClient.query("INSERT INTO users (name, password, answer_passwort_reset, email) VALUES ($1, $2, $3, $4)", [username, hash, security_question, email], function(dbErr, dbRes){});
-      });
-      //FIXIT
-      const useremail = req.body.inputEmail;
-      const username = req.body.inputUsername;
-      const message = {
-        from: 'julianthoms@noreply.com',
-        to: useremail,
-        subject: 'Message title',
-        text: 'Plaintext version of the message',
-        html: '<p>HTML version of the message</p>'
-      };
-      res.redirect("/login");
-
-    }
-  });
-
+  else{
+    dbClient.query("SELECT * FROM users WHERE name = $1 OR email = $2", [username, email], function(dbErr, dbRes){
+      if (dbRes.rows.length > 0){
+        res.render("signup", {error_signup: "Username already taken! Please choose a different one"});
+      }
+      else{
+        //this hashes password
+        bcrypt.hash(userpassword, saltRounds, function(err, hash) {
+          dbClient.query("INSERT INTO users (name, password, answer_passwort_reset, email) VALUES ($1, $2, $3, $4)", [username, hash, security_question, email], function(dbErr, dbRes){
+            if(dbErr != undefined){
+              console.log(dbErr);
+              res.redirect("/error");
+            }
+            else{
+              res.redirect("/login");
+            }
+          });
+        });
+      }
+    });
+  }
 });
 
 app.post("/login", urlencodedParser, function(req, res){
