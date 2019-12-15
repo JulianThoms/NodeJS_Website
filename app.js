@@ -214,11 +214,16 @@ app.post("*", function(req, res, next){
 
 app.get("/browse", function(req, res){
 
-  dbClient.query("SELECT * FROM books TABLESAMPLE SYSTEM (5)", function(dbErr, dbRes){
-    res.render("browse", {
-      books: dbRes.rows,
-      loggedIn: req.session.loggedIn
-    })
+  dbClient.query("SELECT * FROM books TABLESAMPLE SYSTEM (5) LIMIT 51", function(dbErr, dbRes){
+    if(dbRes.rows.length > 0){
+      res.render("browse", {
+        books: dbRes.rows,
+        loggedIn: req.session.loggedIn
+      })
+    }
+    else{
+      res.render("error", {error_message: "No books found. Please try again later!"} );
+    }
   })
 })
 
