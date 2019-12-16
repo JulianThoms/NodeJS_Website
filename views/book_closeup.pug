@@ -5,8 +5,9 @@ block title
 
 block content
   div(class="row justify-content-center")
-    h1(class="display-2")=book.title
+    h1(class="display-3")=book.title
   div(class="row mt-5 mb-4" style="border-bottom: 1px solid #343A40")
+
   div(class="justify-content-center")  
     if !isFavourite
       form(action="/addFavourite" method="post" class="form-group")
@@ -15,95 +16,60 @@ block content
       form(action="/removeFavourite" method="post" class="form-group")
         button(type="submit" class="btn btn-block" style="background-color:#40343a; color:white; border: none") Remove from Favourites
   div(class="row mt-4 mb-2" style="border-bottom: 1px solid #343A40")
+  div(class="row my-3 justify-content-between")
+    div(class="col-3")
+      div(class="row justify-content-center" style="background-color:#343A40; padding-top: 1.25rem")
+        div(class="col-12")
+          if results != undefined
+            img(class="card-img-top", src=""+results.thumbnail , style="width: 9rem;")
+            div(class="card-body" style="padding-bottom: 0")
+              div(class="card-text")
+                table(class="table table-dark")
+                  tbody
+                    tr
+                      th(scope="col") Author
+                      td=book.author
+                  tbody
+                    tr
+                      th(scope="col") Released
+                      td=book.year
+                  tbody
+                    tr
+                      th(scope="col") ISBN
+                      td=book.isbn
+
+
+    div(class="col-1")
+    div(class="col")
+      h1 What's the book about?
+      br
+      p(class="text-justify")=results.description
+      
+  div(class="row my-4" style="border-bottom: 1px solid #343A40")
+
   div(class="row d-none d-sm-block")
-    div(class="row justify-content-center my-3")
-      div(class="col-3 rounded" style="background-color:#343A40; color: #eaebeb")
-        h1(class="display-4 float-left") Author
-      div(class="col-7 rounded" style="background-color:#343A40; color: #eaebeb")
-        h1(class="display-4")=book.author
-    div(class="row justify-content-center")
-      div(class="col-3 rounded" style="background-color:#343A40; color: #eaebeb")
-        h1(class="display-4  float-left") Year
-      div(class="col-7 rounded" style="background-color:#343A40; color: #eaebeb")
-        h1(class="display-4 ")=book.year
-    div(class="row justify-content-center my-4")
-      div(class="col-3 rounded" style="background-color:#343A40; color: #eaebeb")
-        h1(class="display-4  float-left") ISBN
-      div(class="col-7 rounded" style="background-color:#343A40; color: #eaebeb")
-        h1(class="display-4  ")=book.isbn
-    div(class="row justify-conetnt-center")
-      div(class="col-6")
-        a(class="btn list-group-item list-group-item-action rounded" id="user-review" data-toggle="collapse" href="#user-review-ref" style="background-color:#343A40; color: #eaebeb") Write Review
-      div(class="col-6")
-        a(class="btn list-group-item list-group-item-action rounded" id="get-review" data-toggle="collapse" href="#get-review-ref" style="background-color:#343A40; color: #eaebeb") Read Reviews
+    if reviewed
+      div(class="display-4 text-muted") You have already reviewed this book!
+    else
+      div(class="row justify-content-center")
+        div(class="col-10")
+          form(action="/addReview" method="post" class="form-group")
+            textarea(type="text" name="userReview" maxlength="512" class="form-control" rows="4" style="background-color:#484d53; color:white; border:none" required)
+            button(type="submit" class="btn btn-block mt-2" style="background-color:#343A40; color: white; border:none") Submit!
+  
+  div(class="row my-4" style="border-bottom: 1px solid #343A40")
+  
+  div(class="row justify-content-center")
+    div(class="col-12")
+      a(class="btn list-group-item list-group-item-action rounded" id="get-review" data-toggle="collapse" href="#get-review-ref" style="background-color:#343A40; color: #eaebeb;  border: none") Read Reviews
 
-
-
-
-  div(class="mt-5 row d-none d-sm-block" style="border-top: 1px solid #343A40")
-    div(class="my-5 col-12")
-      if reviewed
-        div(class="fade display-4" id="user-review-ref") You have already reviewed this book!
-      else
-        div(class="fade display-4" id="user-review-ref")
-          div(class="row d-flex justify-content-center")
-
-            div(class="col-10")
-              form(action="/addReview" method="post" class="form-group")
-                textarea(type="text" name="userReview" maxlength="512" class="form-control" rows="4" style="background-color:#484d53; color:white; border:none")
-                button(type="submit" class="btn btn-block mt-3" style="background-color:#343A40; color: white; border:none") Submit!
-
-      div(class="fade display-4" id="get-review-ref" style="border: none")
-        if reviews != undefined
-          each review in reviews
-            div(class="my-5" style="background-color: #484d53")
-              p(class="d-inline float-left" style="")=review.name + ":"
-            div(class="clearfix" style="border-bottom: 1px solid #343A40")
-              p(class="d-inline float-right")=review.review
-        else
-          div(class="display-3") No Reviews yet!
-          
-  div(class="row d-block d-sm-none align-items-center")
-    div(class="row justify-content-center align-self-center my-3")
-      div(class="col-4 rounded" style="background-color:#343A40; color: #eaebeb")
-        h4(class="float-left") Author
-      div(class="col-6 rounded" style="background-color:#343A40; color: #eaebeb")
-        h5=book.author
-    div(class="row justify-content-center")
-      div(class="col-4 rounded" style="background-color:#343A40; color: #eaebeb")
-        h4(class="float-left") Year
-      div(class="col-6 rounded" style="background-color:#343A40; color: #eaebeb")
-        h5=book.year
-    div(class="row justify-content-center my-4")
-      div(class="col-4 rounded" style="background-color:#343A40; color: #eaebeb")
-        h4(class="float-left") ISBN
-      div(class="col-6 rounded" style="background-color:#343A40; color: #eaebeb")
-        h5=book.isbn
-    div(class="row justify-content-center")
-      div(class="col-6")
-        a(class="btn list-group-item list-group-item-action rounded" id="user-review" data-toggle="collapse" href="#user-review-ref" style="background-color:#343A40; color: #eaebeb") Write Review
-      div(class="col-6")
-        a(class="btn list-group-item list-group-item-action rounded" id="get-review" data-toggle="collapse" href="#get-review-ref" style="background-color:#343A40; color: #eaebeb") Read Reviews
-
-  div(class="mt-5 row d-block d-sm-none align-items-center" style="border-top: 1px solid #343A40")
-    div(class="my-5 col-12")
-      if reviewed
-        div(class="fade display-4" id="user-review-ref") You have already reviewed this book!
-      else
-        div(class="fade display-4" id="user-review-ref")
-          div(class="row justify-content-center")
-
-            div(class="col-10")
-              form(action="/addReview" method="post" class="form-group")
-                textarea(type="text" name="userReview" maxlength="512" class="form-control" rows="4" style="background-color:#484d53; color:white; border:none")
-                button(type="submit" class="btn btn-block mt-3" style="background-color:#343A40; color: white; border:none") Submit!
-
-      div(class="fade display-4" id="get-review-ref" style="border: none")
-        if reviews != undefined
-          each review in reviews
-            div(class="my-5" style="background-color: #484d53")
-              p(class="d-inline float-left" style="")=review.name + ":"
-            div(class="clearfix" style="border-bottom: 1px solid #343A40")
-              p(class="d-inline float-right")=review.review
-        else
-          div(class="display-3") No Reviews yet!
+  div(class="my-4 col-12 fade display-4 collapse indent clearfix" id="get-review-ref" style="border: none")
+    if reviews != undefined
+      each review in reviews
+        div(class="mt-5" style="background-color: #484d53")
+          p(class="d-inline float-left")=review.name + ":"
+        div(class="" style="border-bottom: 1px solid #343A40")
+          p(class="d-inline float-right")=review.review
+    else
+      div(class="display-3") No Reviews yet!
+  div(class="row my-4" style="border-bottom: 1px solid #343A40")
