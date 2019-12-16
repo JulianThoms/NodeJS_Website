@@ -6,19 +6,41 @@ block title
 block content
   div(class="row justify-content-center")
     h1(class="display-3") Account
-
   div(class="row my-5" style="border-bottom: 1px solid #343A40")
 
-  form(action="/signup" method="post" class="form-signin")
-    div(class="form-group")
-      input(type="text", class="form-control text-light bg-dark", id="inputUsername", placeholder="Username", name="username" required)
-    div(class="form-group")
-      input(type="email", class="form-control text-light bg-dark", id="inputEmail", placeholder="Email", name="email" required)
-    br
-    div(class="form-group")
-      input(type="password", class="form-control text-light bg-dark", id="inputPassword" placeholder="Password", name="password" required)
-    div(class="form-group")
-      input(type="password", class="form-control text-light bg-dark", id="inputPassword_check" placeholder="Repeat Password", name="password_check" required)
-
-  div(class="input-group mb-3")
-    input(type="text" class="form-control text-light bg-dark" placeholder="Current Password", id="currentPassword", name="password_current" required)
+  div(class="row")
+    div(class="col-5")
+      div(class="row mb-5")
+        a(class="btn btn-block btn-dark" data-toggle="collapse" href="#collapseChangePassword" role="button") Change Password
+      if error_password != undefined
+        div(class="row alert alert-warning text-center")=error_password
+      if passwordUpdated
+        div(class="row alert alert-success") Password has been updated!
+      div(class="row collapse" id="collapseChangePassword")
+        div(class="col-12")
+          form(action="/changePassword" method="post")
+            div(class="form-group")
+              input(type="password" class="form-control text-light bg-dark" placeholder="Current Password", id="currentPassword", name="password_current" required)
+            div(class="form-group")
+              input(type="password", class="form-control text-light bg-dark", id="inputPassword" placeholder="New Password", name="password" required)
+            div(class="form-group")
+              input(type="password", class="form-control text-light bg-dark", id="inputPassword_check" placeholder="Repeat New Password", name="password_check" required)
+            button(class="btn btn-block btn-dark" type="submit") Submit
+    
+    div(class="col-2")
+    
+    div(class="col-5")
+      div(class="row mb-5")
+        a(class="btn btn-block btn-dark" data-toggle="collapse" href="#collapseChangeEmail" role="button") Change Email
+      if error_email != undefined
+        div(class="row alert alert-warning text-center")=error_email
+      if emailUpdated
+        div(class="row alert alert-success") Email has been updated!
+      div(class="row collapse" id="collapseChangeEmail")
+        div(class="col-12")
+          form(action="/changeEmail" method="post")
+            div(class="form-group")
+              input(type="email", class="form-control text-light bg-dark", id="inputEmail" placeholder="New Email Address", name="email" required)
+            div(class="form-group")
+              input(type="password" class="form-control text-light bg-dark" placeholder="Current Password", id="currentPassword", name="password_current" required)
+            button(class="btn btn-block btn-dark" type="submit") Submit
