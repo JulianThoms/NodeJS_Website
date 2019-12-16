@@ -8,26 +8,6 @@ block content
   div(class="row justify-content-center")
     h1(class="col display-3") Browse Books
   div(class="row my-5" style="border-bottom: 1px solid #343A40")
-  each book in books
-    div(class="row text-center")
-      a(class="col-5 my-3 mx-3 btn text-light bg-dark" data-toggle="collapse" href="#collapse"+book.id_book role="button")=book.title
-      div(class="col-5 my-3 mx-3 collapse align-middle" id="collapse"+book.id_book)
-        div(class="card bg-dark")
-          br
-          div(class="row card-text")
-            div(class="col-1")
-            
-            div(class="col-3")
-              strong Author:
-            div(class="col-8")
-              p=book.author
-            div(class="col-1")
-            div(class="col-3")  
-              strong Published:
-            div(class="col-8")
-              p=book.year
-            div(class="col-1")
-            div(class="col-3")
-              strong ISBN:
-            div(class="col-8")
-              p=book.isbn
+  div(class="row text-center justify-content-center")
+    each book in books
+      a(class="col-5 my-3 mx-3 btn text-light bg-dark" href="search/"+book.id_book)=book.title

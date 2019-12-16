@@ -52,7 +52,7 @@ app.get("/", function (req, res) {
 });
 
 app.get("/impressum", function(req, res){
-  res.render("impressum");
+  res.render("impressum", {loggedIn: req.session.loggedIn});
 });
 
 app.get("/login", function(req, res){
@@ -66,12 +66,7 @@ app.get("/login", function(req, res){
 });
 
 app.get("/signup", function(req, res){
-  if(req.session.user != undefined){
     res.render("signup", {loggedIn: req.session.loggedIn, username: req.session.user});
-  }
-  else{
-    res.render("signup", {loggedIn: false});
-  }
 });
 
 
@@ -467,7 +462,8 @@ app.post("/changeEmail", urlencodedParser, function(req, res){
                                         loggedIn: req.session.loggedIn});
                 }
                 else{
-                  res.render("error", {error_message: "An Error occured. Please try again later!"})
+                  res.render("error", {error_message: "An Error occured. Please try again later!",
+                                        loggedIn: req.session.loggedIn})
                 }
               });
             }
