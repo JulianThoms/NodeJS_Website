@@ -3,7 +3,6 @@ var pg = require("pg");
 var bodyParser = require("body-parser");
 var session = require("express-session");
 const bcrypt = require('bcrypt');
-var bookLookup = require('google-books-search');
 //const nodemailer = require("nodemailer");
 //let transporter = nodemailer.createTransport(transport[, defaults]); //only one required
 const saltRounds = 10;
