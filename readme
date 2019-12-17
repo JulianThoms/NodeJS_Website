@@ -1,2 +1,2 @@
-A webpage using Node.JS with Express, PUG, BCrypt, sessions.
+A webpage using Node.JS with Express, PUG, BCrypt, sessions, googlebookslookup.
 Connected to a PostGreSQL Database.

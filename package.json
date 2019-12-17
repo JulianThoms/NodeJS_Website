@@ -10,6 +10,7 @@
   "license": "AGPL-3.0-or-later",
   "dependencies": {
     "bcrypt": "^3.0.7",
+    "csv-reader": "^1.0.3",
     "express": "^4.16.4",
     "express-session": "^1.15.6",
     "google-books-search": "^0.3.1",

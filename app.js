@@ -8,6 +8,15 @@ const bcrypt = require('bcrypt');
 const saltRounds = 10;
 var googlebooks = require('google-books-search');
 
+var options = {
+  field: 'isbn',
+  offset: 0,
+  limit: 10,
+  type: 'books',
+  order: 'relevance',
+  lang: 'en'
+};
+
 const CON_STRING = process.env.DB_CON_STRING || "postgres://lqkivzqdzcaalr:78e9f45f9f4195a0fa11636e58447dd83ef914c0626af5ef55c12177af0e1c5b@ec2-54-75-235-28.eu-west-1.compute.amazonaws.com:5432/dc0kk7vjlc3fti";
 if (CON_STRING == undefined) {
   console.log("Error: Environment variable DB_CON_STRING not set!");
@@ -65,7 +74,7 @@ app.get("/login", function(req, res){
 });
 
 app.get("/signup", function(req, res){
-    res.render("signup", {loggedIn: req.session.loggedIn, username: req.session.user});
+  res.render("signup", {loggedIn: req.session.loggedIn, username: req.session.user});
 });
 
 
@@ -217,7 +226,7 @@ app.get("/browse", function(req, res){
       })
     }
     else{
-      res.render("error", {error_message: "No books found. Please try again later!", loggedIn: true} );
+      res.render("error", {error_message: "No books found. Please refresh to try again!", loggedIn: true, refreshBrowse: true} );
     }
   })
 })
@@ -256,7 +265,7 @@ app.post("/search", urlencodedParser, function(req, res){
 
   }
   else{
-    dbClient.query("SELECT * FROM books WHERE title LIKE $1 OR author LIKE $1 OR year = $1 OR isbn LIKE $2 LIMIT 50", ['%'+search+'%', search+'%'], function(dbErr, dbRes){
+    dbClient.query("SELECT * FROM books WHERE title ILIKE $1 OR author ILIKE $1 OR year = $1 OR isbn LIKE $2 LIMIT 50", ['%'+search+'%', search+'%'], function(dbErr, dbRes){
       if(dbRes == undefined){
         res.render("search_results", {error_message: "Nothing found! Try some other term or start Browsing!", username, loggedIn: req.session.loggedIn});
 
@@ -315,35 +324,25 @@ app.get("/search/:id", function (req, res) {
           else{
             reviews = dbResReview.rows;
           }
-          googlebooks.search(dbRes.rows[0].title, function(error, results) {
-            if (error) {
-              console.log(error)
-            } else {
+          googlebooks.search(dbRes.rows[0].isbn, options, function(error, results) {
               results = results[0];
-              if(dbRes.rows[0].google_books_description == null || dbRes.rows[0].google_books_id == null){
-                dbClient.query("UPDATE books SET google_books_id = $1, google_books_description = $2 WHERE id_book = $3", [results.thumbnail, results.description, bookID], function(dbErrInsert, dbResInsert){if(dbErrInsert) console.log(dbErrInsert)})
-
-            }
-            res.render("book_closeup", {
-              id_book: dbRes.rows[0].id_book,
-              book: dbRes.rows[0],
-              reviews,
-              no_reviews: no_reviews,
-              loggedIn: req.session.loggedIn,
-              reviewed,
-              results,
-              isFavourite
-            });
-          }
-        }
-        );
-
-
+              res.render("book_closeup", {
+                id_book: dbRes.rows[0].id_book,
+                book: dbRes.rows[0],
+                reviews,
+                no_reviews: no_reviews,
+                loggedIn: req.session.loggedIn,
+                reviewed,
+                results,
+                isFavourite
+              });
+          });
         });
       });
     }
   });
 });
+
 
 app.post("/addReview", urlencodedParser, function(req, res){
   userID = req.session.userID;
@@ -406,85 +405,85 @@ app.post("/changePassword", urlencodedParser, function(req, res){
     dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [input.name], function(dbErr, dbRes){
       if(dbRes.rows.length == 0 || dbErr != undefined) {
         res.render("error", {error_message: "Something went wrong!"})}
-      else{
-        hash = dbRes.rows[0].password;
-        userID = dbRes.rows[0].id_user;
-        bcrypt.compare(input.currentPassword, hash, function(errComp, resComp) {
-          if(!resComp){
-            res.render("account", {error_password: "Current Password doesn't match!"})
-          }
-          else{
-            bcrypt.hash(input.newPassword, saltRounds, function(err, hash) {
-              dbClient.query("UPDATE users SET password = $1 WHERE id_user = $2", [hash, userID], function(dbErr, dbRes){
-                if(dbErr == undefined){
-                  res.render("account", {passwordUpdated: true,
-                                        loggedIn: req.session.loggedIn});
-                }
-                else{
-                  res.render("error", {error_message: "An Error occured. Please try again later!"})
-                }
-              });
-            });
-          }
-        });
-      }
-    });
-  }
-})
-
-app.post("/changeEmail", urlencodedParser, function(req, res){
-  input = {
-    name: req.session.user,
-    currentPassword: req.body.password_current,
-    newEmail: req.body.email
-  }
-
-  dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [input.name], function(dbErr, dbRes){
-    if(dbRes.rows.length == 0 || dbErr != undefined) {
-      res.render("error", {error_message: "Something went wrong!"})}
-    else{
-      dbClient.query("SELECT id_user FROM users WHERE email = $1", [input.newEmail], function(dbDupErr, dbDupRes){
-        if(dbDupRes.rows.length != 0){
-          res.render("account", {error_email: "New Email already in use!"})
-        }
         else{
           hash = dbRes.rows[0].password;
           userID = dbRes.rows[0].id_user;
           bcrypt.compare(input.currentPassword, hash, function(errComp, resComp) {
             if(!resComp){
-              res.render("account", {error_email: "Current Password doesn't match!"})
+              res.render("account", {error_password: "Current Password doesn't match!"})
             }
             else{
-              dbClient.query("UPDATE users SET email = $1 WHERE id_user = $2", [input.newEmail, userID], function(dbErr, dbRes){
-                if(dbErr == undefined){
-                  res.render("account", {emailUpdated: true,
-                                        loggedIn: req.session.loggedIn});
+              bcrypt.hash(input.newPassword, saltRounds, function(err, hash) {
+                dbClient.query("UPDATE users SET password = $1 WHERE id_user = $2", [hash, userID], function(dbErr, dbRes){
+                  if(dbErr == undefined){
+                    res.render("account", {passwordUpdated: true,
+                      loggedIn: req.session.loggedIn});
+                    }
+                    else{
+                      res.render("error", {error_message: "An Error occured. Please try again later!"})
+                    }
+                  });
+                });
+              }
+            });
+          }
+        });
+      }
+    })
+
+    app.post("/changeEmail", urlencodedParser, function(req, res){
+      input = {
+        name: req.session.user,
+        currentPassword: req.body.password_current,
+        newEmail: req.body.email
+      }
+
+      dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [input.name], function(dbErr, dbRes){
+        if(dbRes.rows.length == 0 || dbErr != undefined) {
+          res.render("error", {error_message: "Something went wrong!"})}
+          else{
+            dbClient.query("SELECT id_user FROM users WHERE email = $1", [input.newEmail], function(dbDupErr, dbDupRes){
+              if(dbDupRes.rows.length != 0){
+                res.render("account", {error_email: "New Email already in use!"})
+              }
+              else{
+                hash = dbRes.rows[0].password;
+                userID = dbRes.rows[0].id_user;
+                bcrypt.compare(input.currentPassword, hash, function(errComp, resComp) {
+                  if(!resComp){
+                    res.render("account", {error_email: "Current Password doesn't match!"})
+                  }
+                  else{
+                    dbClient.query("UPDATE users SET email = $1 WHERE id_user = $2", [input.newEmail, userID], function(dbErr, dbRes){
+                      if(dbErr == undefined){
+                        res.render("account", {emailUpdated: true,
+                          loggedIn: req.session.loggedIn});
+                        }
+                        else{
+                          res.render("error", {error_message: "An Error occured. Please try again later!",
+                          loggedIn: req.session.loggedIn})
+                        }
+                      });
+                    }
+                  });
                 }
-                else{
-                  res.render("error", {error_message: "An Error occured. Please try again later!",
-                                        loggedIn: req.session.loggedIn})
-                }
-              });
+              })
             }
           });
-        }
-      })
-    }
-  });
-})
+        })
 
 
-//Catches wrong pages
-app.get("*", function(req, res){
-  res.render("error", {error_message: "This page does not exist!", loggedIn: req.session.loggedIn})
-});
+        //Catches wrong pages
+        app.get("*", function(req, res){
+          res.render("error", {error_message: "This page does not exist!", loggedIn: req.session.loggedIn})
+        });
 
 
 
 
 
-//END OF GET/POST
+        //END OF GET/POST
 
-app.listen(PORT, function () {
-  console.log(`Shopping App listening on Port ${PORT}`);
-});
+        app.listen(PORT, function () {
+          console.log(`Shopping App listening on Port ${PORT}`);
+        });

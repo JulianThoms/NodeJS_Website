@@ -8,22 +8,10 @@ div {
 body{
   background-color: #282C34;
   height: 100%;
-  padding-top: 55px; 
+  padding-top: 55px;
   padding-bottom: 55px;
 }
 footer{
     color: #282C34;
     background-color: rgb(82, 140, 142);
   }
-
-
-.star-rating {
-  line-height:32px;
-  font-size:1.25em;
-}
-
-.star-rating .fa-star{color: yellow;}
-
-button{
- color: white;
-}

@@ -11,4 +11,9 @@ block content
   else
     h1 Something terrible has happened. Please let the Side-Owner know what you did to see this.
   br
-  a(href="/" class="btn btn-outline-light btn-lg") Go back to safety
+  if refreshBrowse != undefined
+    div(class="row")
+      a(href="browse" class="btn btn-outline-light btn-block btn-lg") Refresh Browse
+  br
+  div(class="row justify-content-center")
+    a(href="/" class="btn btn-outline-light btn-block btn-lg") Go back to safety
