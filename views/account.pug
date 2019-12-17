@@ -9,7 +9,7 @@ block content
   div(class="row my-5" style="border-bottom: 1px solid #343A40")
 
   div(class="row")
-    div(class="col-5 rounded" style="background-color: #343A40")
+    div(class="col-5 rounded d-none d-lg-block" style="background-color: #343A40")
       div(class="row mb-5 justify-content-center")
         h1(class="display-4") Change Password
       if error_password != undefined
@@ -27,9 +27,46 @@ block content
               input(type="password", class="form-control text-light bg-dark", id="inputPassword_check" placeholder="Repeat New Password", name="password_check" required)
             button(class="btn btn-block btn-info" type="submit") Submit
     
-    div(class="col-2")
+    div(class="col-2 d-none d-lg-block")
     
-    div(class="col-5 rounded" style="background-color: #343A40")
+    div(class="col-5 rounded d-none d-lg-block" style="background-color: #343A40")
+      div(class="row mb-5 justify-content-center")
+        h1(class="display-4") Change Email
+      if error_email != undefined
+        div(class="row alert alert-warning text-center")=error_email
+      if emailUpdated
+        div(class="row alert alert-success") Email has been updated!
+      div(class="row")
+        div(class="col-12 my-3")
+          form(action="/changeEmail" method="post")
+            div(class="form-group")
+              input(type="email", class="form-control text-light bg-dark", id="inputEmail" placeholder="New Email Address", name="email", required)
+            div(class="form-group")
+              input(type="password" class="form-control text-light bg-dark" placeholder="Current Password", id="currentPassword", name="password_current" required)
+            br
+            br
+            button(class="mt-2 btn btn-block btn-info" type="submit") Submit
+
+  div(class="row d-lg-none")
+  
+    div(class="col-12 rounded" style="background-color: #343A40")
+      div(class="row mb-5 justify-content-center")
+        h1(class="display-4") Change Password
+      if error_password != undefined
+        div(class="row alert alert-warning text-center")=error_password
+      if passwordUpdated
+        div(class="row alert alert-success") Password has been updated!
+      div(class="row")
+        div(class="col-12 my-3")
+          form(action="/changePassword" method="post")
+            div(class="form-group")
+              input(type="password" class="form-control text-light bg-dark" placeholder="Current Password", id="currentPassword", name="password_current" required)
+            div(class="form-group")
+              input(type="password", class="form-control text-light bg-dark", id="inputPassword" placeholder="New Password", name="password" required)
+            div(class="form-group")
+              input(type="password", class="form-control text-light bg-dark", id="inputPassword_check" placeholder="Repeat New Password", name="password_check" required)
+    
+    div(class="col-12 rounded mt-5" style="background-color: #343A40")
       div(class="row mb-5 justify-content-center")
         h1(class="display-4") Change Email
       if error_email != undefined
