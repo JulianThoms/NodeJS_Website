@@ -343,6 +343,15 @@ app.get("/search/:id", function (req, res) {
   });
 });
 
+app.post("/searchRandom", urlencodedParser, function(req, res){
+  let randomBookID;
+  dbClient.query("SELECT id_book FROM books ORDER BY RANDOM() LIMIT 1", function(dbErr, dbRes){
+    if(!dbErr){
+      randomBookID = dbRes.rows[0].id_book;
+      res.redirect("/search/"+randomBookID);
+    }
+  })
+})
 
 app.post("/addReview", urlencodedParser, function(req, res){
   userID = req.session.userID;
