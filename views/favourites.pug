@@ -14,5 +14,10 @@ block content
       each favourite in favourites
         div(class="col-8")
           a(href="/search/"+favourite.id_book class="list-group-item list-group-item-action text-light btn btn-block" style="background-color: #343A40")=favourite.title
-        div(class="col-4")
-          button(type="submit" class="btn btn-block" style="background-color:#40343a; color:white; border: none") Remove
+        div(class="col-4 ")
+          form(action="/removeFavourite/"+favourite.id_book+"/favourites" method="post")
+            button(type="submit" class="btn btn-block" style="background-color:#40343a; color:white; border: none") Remove
+    
+    else
+      h1 Nothing here! Start browsing to find books to add as your favourites!
+      a(href="/browse" class="list-group-item list-group-item-action text-light btn btn-block")

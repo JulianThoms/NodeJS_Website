@@ -318,21 +318,35 @@ app.get("/search/:id", function (req, res) {
 
         dbClient.query("SELECT avg(rating) FROM users_reviews WHERE id_book = $1", [bookID], function(errAvg, resAvg){
           averageRating = resAvg.rows[0].avg;
-        })
 
-        dbClient.query("SELECT users_reviews.review, users.name FROM users_reviews INNER JOIN users ON users_reviews.id_user = users.id_user WHERE users_reviews.id_book=$1", [bookID], function (dbErrReview, dbResReview) {
-          if(dbErrReview || dbResReview.rows.length == 0){
-            no_reviews = true;
-          }
-          reviews = dbResReview.rows;
-          googlebooks.search(dbRes.rows[0].isbn, options, function(error, results) {
-            results = results[0];
 
-            if(results == undefined){
-              console.log("nothing found, searching deeper")
-              googlebooks.search(dbRes.rows[0].title, function(errorTwo, resultsTwo) {
-                results = resultsTwo[0];
-                
+          dbClient.query("SELECT users_reviews.review, users.name FROM users_reviews INNER JOIN users ON users_reviews.id_user = users.id_user WHERE users_reviews.id_book=$1", [bookID], function (dbErrReview, dbResReview) {
+            if(dbErrReview || dbResReview.rows.length == 0){
+              no_reviews = true;
+            }
+            reviews = dbResReview.rows;
+            googlebooks.search(dbRes.rows[0].isbn, options, function(error, results) {
+              results = results[0];
+
+              if(results == undefined){
+                console.log("nothing found, searching deeper")
+                googlebooks.search(dbRes.rows[0].title, function(errorTwo, resultsTwo) {
+                  results = resultsTwo[0];
+
+                  res.render("book_closeup", {
+                    id_book: dbRes.rows[0].id_book,
+                    book: dbRes.rows[0],
+                    reviews,
+                    no_reviews: no_reviews,
+                    loggedIn: req.session.loggedIn,
+                    reviewed,
+                    results,
+                    isFavourite,
+                    averageRating
+                  });
+                });
+              }
+              else{
                 res.render("book_closeup", {
                   id_book: dbRes.rows[0].id_book,
                   book: dbRes.rows[0],
@@ -344,22 +358,9 @@ app.get("/search/:id", function (req, res) {
                   isFavourite,
                   averageRating
                 });
-              });
-            }
-            else{
-              res.render("book_closeup", {
-                id_book: dbRes.rows[0].id_book,
-                book: dbRes.rows[0],
-                reviews,
-                no_reviews: no_reviews,
-                loggedIn: req.session.loggedIn,
-                reviewed,
-                results,
-                isFavourite,
-                averageRating
-              });
             }
           });
+        })
         });
       });
     }
@@ -386,6 +387,9 @@ app.post("/addReview", urlencodedParser, function(req, res){
       res.redirect("/search/"+bookID);
     });
   }
+  else{
+    res.redirect("/error");
+  }
 });
 
 
@@ -406,15 +410,21 @@ app.post("/addFavourite", urlencodedParser, function(req, res){
   })
 });
 
-app.post("/removeFavourite", urlencodedParser, function(req, res){
+app.post("/removeFavourite/:id/:where", urlencodedParser, function(req, res){
   userID = req.session.userID;
-  bookID = req.session.bookID;
+  bookID = req.params.id;
+  where = req.params.where;
+  console.log(where)
   dbClient.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck){
     if(dbResDupCheck.rows.length == 1){
       dbClient.query("DELETE FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErr, dbRes){
         if(dbErr == undefined){
+          if(where == "favourites"){
+            res.redirect("/favourites");
+          }
+          else{
           res.redirect("/search/"+bookID);
-        }
+        }}
         else{
           res.redirect("/error", 500);
         }
