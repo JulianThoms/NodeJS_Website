@@ -4,8 +4,11 @@ let star3 = document.getElementById('star3');
 let star4 = document.getElementById('star4');
 let star5 = document.getElementById('star5');
 let stars = [star1, star2, star3, star4, star5];
+let rating_input = document.getElementById('rating_input');
+let score = 0;
 
 let locked = false;
+
 
 for(const star of stars){
   star.addEventListener("mouseover", gold);
@@ -46,6 +49,23 @@ function gray(){
 
 function lock(){
   console.log("clicked by "+this.id)
+  switch(this.id){
+    case "star5":
+      score = 5;
+      break;
+    case "star4":
+      score = 4;
+      break;
+    case "star3":
+      score = 3;
+      break;
+    case "star2":
+      score = 2;
+      break;
+    case "star1":
+      score = 1;
+      break;
+  }
   if(locked == false){
     for(const star of stars){
       console.log("removing")
@@ -61,4 +81,5 @@ function lock(){
     }
     locked = false;
   }
+  rating_input.value = score;
 }

@@ -11,10 +11,7 @@ var googlebooks = require('google-books-search');
 var options = {
   field: 'isbn',
   offset: 0,
-  limit: 10,
-  type: 'books',
-  order: 'relevance',
-  lang: 'en'
+  limit: 1
 };
 
 const CON_STRING = process.env.DB_CON_STRING || "postgres://lqkivzqdzcaalr:78e9f45f9f4195a0fa11636e58447dd83ef914c0626af5ef55c12177af0e1c5b@ec2-54-75-235-28.eu-west-1.compute.amazonaws.com:5432/dc0kk7vjlc3fti";
@@ -48,6 +45,7 @@ app.use(express.static(__dirname + '/public'));
 
 app.set("views", "views");
 app.set("view engine", "pug");
+
 
 app.get("/", function (req, res) {
   if(req.session.user != undefined){
@@ -294,6 +292,7 @@ app.get("/search/:id", function (req, res) {
   let reviews;
   let no_reviews = false;
   let image;
+  let averageRating;
 
 
   dbClient.query("SELECT * FROM users_favourites WHERE id_book = $1 AND id_user = $2", [bookID, userID], function(dbErrLookupIfFavourite, dbResLookupIfFavourite){
@@ -317,15 +316,37 @@ app.get("/search/:id", function (req, res) {
           reviewed = true;
         }
 
-        dbClient.query("SELECT users_reviews.review, users.name FROM users_reviews INNER JOIN users ON users_reviews.id_user = users.id_user WHERE users_reviews.id_book=$1 AND users.id_user=$2", [bookID, userID], function (dbErrReview, dbResReview) {
+        dbClient.query("SELECT avg(rating) FROM users_reviews WHERE id_book = $1", [bookID], function(errAvg, resAvg){
+          averageRating = resAvg.rows[0].avg;
+        })
+
+        dbClient.query("SELECT users_reviews.review, users.name FROM users_reviews INNER JOIN users ON users_reviews.id_user = users.id_user WHERE users_reviews.id_book=$1", [bookID], function (dbErrReview, dbResReview) {
           if(dbErrReview || dbResReview.rows.length == 0){
             no_reviews = true;
           }
-          else{
-            reviews = dbResReview.rows;
-          }
+          reviews = dbResReview.rows;
           googlebooks.search(dbRes.rows[0].isbn, options, function(error, results) {
-              results = results[0];
+            results = results[0];
+
+            if(results == undefined){
+              console.log("nothing found, searching deeper")
+              googlebooks.search(dbRes.rows[0].title, function(errorTwo, resultsTwo) {
+                results = resultsTwo[0];
+                
+                res.render("book_closeup", {
+                  id_book: dbRes.rows[0].id_book,
+                  book: dbRes.rows[0],
+                  reviews,
+                  no_reviews: no_reviews,
+                  loggedIn: req.session.loggedIn,
+                  reviewed,
+                  results,
+                  isFavourite,
+                  averageRating
+                });
+              });
+            }
+            else{
               res.render("book_closeup", {
                 id_book: dbRes.rows[0].id_book,
                 book: dbRes.rows[0],
@@ -334,8 +355,10 @@ app.get("/search/:id", function (req, res) {
                 loggedIn: req.session.loggedIn,
                 reviewed,
                 results,
-                isFavourite
+                isFavourite,
+                averageRating
               });
+            }
           });
         });
       });
@@ -357,8 +380,9 @@ app.post("/addReview", urlencodedParser, function(req, res){
   userID = req.session.userID;
   bookID = req.session.bookID;
   review = req.body.userReview;
+  rating = req.body.rating;
   if(review !=  ""){
-    dbClient.query("INSERT INTO users_reviews(id_user, id_book, review) VALUES($1, $2, $3)", [userID, bookID, review], function(dbErr, dbRes){
+    dbClient.query("INSERT INTO users_reviews(id_user, id_book, review, rating) VALUES($1, $2, $3, $4)", [userID, bookID, review, rating], function(dbErr, dbRes){
       res.redirect("/search/"+bookID);
     });
   }
