@@ -1,7 +1,7 @@
 extends layout.pug
 
 block title
-  title Login
+  title Error :(
 
 block content
   div(class="row justify-content-center")
@@ -9,7 +9,7 @@ block content
   if error_message != undefined
     h1(class="display-4")=error_message
   else
-    h1 Something terrible has happened. Please let the Side-Owner know what you did to see this.
+    h1 This page does not exist!
   br
   if refreshBrowse != undefined
     div(class="row")

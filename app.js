@@ -50,7 +50,7 @@ app.set("view engine", "pug");
 app.get("/", function (req, res) {
   if(req.session.user != undefined){
     req.session.loggedIn = true;
-    res.render("index", {loggedIn: req.session.loggedIn, user: req.session.user});
+    res.render("index", {loggedIn: req.session.loggedIn, username: req.session.user});
   }
   else{
     res.render("index", {loggedIn: false});
@@ -58,7 +58,7 @@ app.get("/", function (req, res) {
 });
 
 app.get("/impressum", function(req, res){
-  res.render("impressum", {loggedIn: req.session.loggedIn});
+  res.render("impressum", {loggedIn: req.session.loggedIn, username: req.session.user});
 });
 
 app.get("/login", function(req, res){
@@ -144,7 +144,7 @@ app.get('/forgotPassword', function(req, res){
 });
 
 app.post("/forgotPassword", urlencodedParser, function(req, res){
-  const userName = req.body.username;
+  const username = req.body.username;
   const userEmail = req.body.email;
   const userSecret = req.body.answer_passwort_reset;
   const userPassword = req.body.password;
@@ -153,7 +153,7 @@ app.post("/forgotPassword", urlencodedParser, function(req, res){
     res.render("forgotPassword", {error_forgot_password: "Your passwords do not match! Please try again"});
   }
   else{
-    dbClient.query("SELECT * FROM users WHERE name = $1 AND email = $2 AND answer_passwort_reset = $3", [userName, userEmail, userSecret], function(dbErr, dbRes){
+    dbClient.query("SELECT * FROM users WHERE name = $1 AND email = $2 AND answer_passwort_reset = $3", [username, userEmail, userSecret], function(dbErr, dbRes){
       if (dbRes.rows.length == 1){
         id_user = dbRes.rows[0].id_user;
         bcrypt.hash(userPassword, saltRounds, function(err, hash) {
@@ -220,28 +220,27 @@ app.get("/browse", function(req, res){
     if(dbRes.rows.length > 0){
       res.render("browse", {
         books: dbRes.rows,
-        loggedIn: req.session.loggedIn
+        loggedIn: req.session.loggedIn,
+        username: req.session.user
       })
     }
     else{
-      res.render("error", {error_message: "No books found. Please refresh to try again!", loggedIn: true, refreshBrowse: true} );
+      res.render("error", {error_message: "No books found. Please refresh to try again!", loggedIn: true, refreshBrowse: true, username: req.session.user} );
     }
   })
 })
 
 app.get("/account", function(req, res){
 
-
   res.render("account", {
     loggedIn: req.session.loggedIn,
-    username: req.session.name
+    username: req.session.user
   })
 });
 
 
 app.get("/favourites", function (req, res){
   let favourites = "";
-
   let username = req.session.user;
   let id = req.session.userID;
   if(id != undefined){
@@ -263,17 +262,17 @@ app.post("/search", urlencodedParser, function(req, res){
 
   }
   else{
-    dbClient.query("SELECT * FROM books WHERE title ILIKE $1 OR author ILIKE $1 OR year = $1 OR isbn LIKE $2 LIMIT 50", ['%'+search+'%', search+'%'], function(dbErr, dbRes){
+    dbClient.query("SELECT * FROM books WHERE title ILIKE $1 OR author ILIKE $1 OR year = $3 OR isbn LIKE $2 LIMIT 50", ['%'+search+'%', search+'%', search], function(dbErr, dbRes){
       if(dbRes == undefined){
-        res.render("search_results", {error_message: "Nothing found! Try some other term or start Browsing!", username, loggedIn: req.session.loggedIn});
+        res.render("search_results", {error_message: "Nothing found! Try some other term or start Browsing!", username, loggedIn: req.session.loggedIn, username: req.session.user});
 
       }
       else if(dbRes.rows.length == 0){
-        res.render("search_results", {error_message: "Nothing found! Try some other term or start Browsing!", username, loggedIn: req.session.loggedIn});
+        res.render("search_results", {error_message: "Nothing found! Try some other term or start Browsing!", username, loggedIn: req.session.loggedIn, username: req.session.user});
 
       }
       else{
-        res.render("search_results", {search_results: dbRes.rows, username, loggedIn: req.session.loggedIn});
+        res.render("search_results", {search_results: dbRes.rows, username, loggedIn: req.session.loggedIn, username: req.session.user});
 
       }
     });
@@ -286,7 +285,7 @@ app.get("/search/:id", function (req, res) {
 
   const bookID = req.params.id;
   req.session.bookID = bookID;
-  const userName = req.session.user;
+  const username = req.session.user;
   const userID = req.session.userID
   let isFavourite = false;
   let reviews;
@@ -342,7 +341,8 @@ app.get("/search/:id", function (req, res) {
                     reviewed,
                     results,
                     isFavourite,
-                    averageRating
+                    averageRating,
+                    username: req.session.user
                   });
                 });
               }
@@ -356,7 +356,8 @@ app.get("/search/:id", function (req, res) {
                   reviewed,
                   results,
                   isFavourite,
-                  averageRating
+                  averageRating,
+                  username: req.session.user
                 });
             }
           });
@@ -442,7 +443,7 @@ app.post("/changePassword", urlencodedParser, function(req, res){
   }
 
   if (input.newPassword !== input.newPasswordCheck){
-    res.render("account", {error_password: "New Passwords don't match!"});
+    res.render("account", {error_password: "New Passwords don't match!", username: req.session.user});
   }
   else {
     dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [input.name], function(dbErr, dbRes){
@@ -453,17 +454,17 @@ app.post("/changePassword", urlencodedParser, function(req, res){
           userID = dbRes.rows[0].id_user;
           bcrypt.compare(input.currentPassword, hash, function(errComp, resComp) {
             if(!resComp){
-              res.render("account", {error_password: "Current Password doesn't match!"})
+              res.render("account", {error_password: "Current Password doesn't match!", username: req.session.user})
             }
             else{
               bcrypt.hash(input.newPassword, saltRounds, function(err, hash) {
                 dbClient.query("UPDATE users SET password = $1 WHERE id_user = $2", [hash, userID], function(dbErr, dbRes){
                   if(dbErr == undefined){
                     res.render("account", {passwordUpdated: true,
-                      loggedIn: req.session.loggedIn});
+                      loggedIn: req.session.loggedIn, username: req.session.user});
                     }
                     else{
-                      res.render("error", {error_message: "An Error occured. Please try again later!"})
+                      res.render("error", {error_message: "An Error occured. Please try again later!", username: req.session.user})
                     }
                   });
                 });
@@ -483,28 +484,28 @@ app.post("/changePassword", urlencodedParser, function(req, res){
 
       dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [input.name], function(dbErr, dbRes){
         if(dbRes.rows.length == 0 || dbErr != undefined) {
-          res.render("error", {error_message: "Something went wrong!"})}
+          res.render("error", {error_message: "Something went wrong!", username: req.session.user})}
           else{
             dbClient.query("SELECT id_user FROM users WHERE email = $1", [input.newEmail], function(dbDupErr, dbDupRes){
               if(dbDupRes.rows.length != 0){
-                res.render("account", {error_email: "New Email already in use!"})
+                res.render("account", {error_email: "New Email already in use!", username: req.session.user})
               }
               else{
                 hash = dbRes.rows[0].password;
                 userID = dbRes.rows[0].id_user;
                 bcrypt.compare(input.currentPassword, hash, function(errComp, resComp) {
                   if(!resComp){
-                    res.render("account", {error_email: "Current Password doesn't match!"})
+                    res.render("account", {error_email: "Current Password doesn't match!", username: req.session.user})
                   }
                   else{
                     dbClient.query("UPDATE users SET email = $1 WHERE id_user = $2", [input.newEmail, userID], function(dbErr, dbRes){
                       if(dbErr == undefined){
                         res.render("account", {emailUpdated: true,
-                          loggedIn: req.session.loggedIn});
+                          loggedIn: req.session.loggedIn, username: req.session.user});
                         }
                         else{
                           res.render("error", {error_message: "An Error occured. Please try again later!",
-                          loggedIn: req.session.loggedIn})
+                          loggedIn: req.session.loggedIn, username: req.session.user})
                         }
                       });
                     }
@@ -518,7 +519,7 @@ app.post("/changePassword", urlencodedParser, function(req, res){
 
         //Catches wrong pages
         app.get("*", function(req, res){
-          res.render("error", {error_message: "This page does not exist!", loggedIn: req.session.loggedIn})
+          res.render("error", {error_message: "This page does not exist!", loggedIn: req.session.loggedIn, username: req.session.user})
         });
 
 

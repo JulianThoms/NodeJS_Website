@@ -1,7 +1,7 @@
 extends layout.pug
 
 block title
-  title Searchresults
+  title Your results!
 
 block content
 
@@ -13,8 +13,10 @@ block content
     if search_results != undefined
       div(class="col list-group")
         each result in search_results
-          a(href="/search/"+result.id_book class="list-group-item list-group-item-action text-light" style="background-color: #343A40")=result.title
+          a(href="/search/"+result.id_book class="list-group-item list-group-item-action text-light my-2" style="background-color: #343A40")=result.title
     else
-      br
-      h3(class="col-8 display-4")=error_message
+      div(class="col-10")
+        div(Class="row display-4")=error_message
+        div(class="row my-4")
+          a(href="browse " class="btn btn-outline-light btn-block btn-lg") Browse
     div(class="col-1")
