@@ -1,2 +1,11 @@
 A webpage using Node.JS with Express, PUG, BCrypt, sessions, googlebookslookup.
 Connected to a PostGreSQL Database.
+
+Testaccount:
+Username: "Markus"
+Password: "Password"
+Email: "Markus@email.de"
+Answer-Password-Reset: "Schnabeltier"
+
+DB:
+CON_STRING: "postgres://lqkivzqdzcaalr:78e9f45f9f4195a0fa11636e58447dd83ef914c0626af5ef55c12177af0e1c5b@ec2-54-75-235-28.eu-west-1.compute.amazonaws.com:5432/dc0kk7vjlc3fti"

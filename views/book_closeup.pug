@@ -143,6 +143,16 @@ block content
         div(class="card my-2 clearfix" style="width: 100%; background-color:#343A40")
           div(class="card-body float-left")
             h3(class="card-title float-left")=review.name
+            div(class="card-title float-right")
+              img(src="/images/star_gold.png" class="star")
+              if review.rating > 1.5
+                img(src="/images/star_gold.png" class="star")
+              if review.rating > 2.5
+                img(src="/images/star_gold.png" class="star")
+              if review.rating > 3.5
+                img(src="/images/star_gold.png" class="star")
+              if review.rating > 4.5
+                img(src="/images/star_gold.png" class="star")
           div(class="card-body")
             h5(class="card-text float-left")=review.review
 
