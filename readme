@@ -3,7 +3,7 @@ Connected to a PostGreSQL Database.
 
 Testaccount:
 Username: "Markus"
-Password: "Password"
+Password: "password"
 Email: "Markus@email.de"
 Answer-Password-Reset: "Schnabeltier"
 
