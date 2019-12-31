@@ -127,35 +127,55 @@ app.post("/signup", urlencodedParser, function(req, res) {
   }
 });
 
+
 app.post("/login", urlencodedParser, function(req, res) {
   const username = req.body.username;
   let userID;
   const userpassword = req.body.password;
   let hash;
-  dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [username], function(dbErr, dbRes) {
-    if (username == "" || dbRes.rows.length == 0 || dbErr != undefined) {
+
+  let p = new Promise(function(resolve, reject) {
+    dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [username], function(dbErr, dbRes) {
+      if (username == "" || dbRes.rows.length == 0 || dbErr != undefined) {
+        reject();
+      }
+      else{
+        hash = dbRes.rows[0].password;
+        userID = dbRes.rows[0].id_user;
+        resolve();
+      }
+    });
+  });
+
+
+  p.then(() => {
+    let p2 = new Promise(function(resolve, reject){
+      bcrypt.compare(userpassword, hash, function(errComp, resComp) {
+        if (!resComp) {
+          reject();
+        }
+        else{
+          resolve();
+        }
+      })
+    });
+    p2.then(() => {
+      req.session.userID =userID;
+      req.session.user = username;
+      res.redirect("/");
+    }).catch(() => {
       res.render("login", {
         error_login: "Username or Password wrong!"
       })
-    } else {
-      hash = dbRes.rows[0].password;
-      userID = dbRes.rows[0].id_user;
+    })
 
-      bcrypt.compare(userpassword, hash, function(errComp, resComp) {
-        if (!resComp) {
-          res.render("login", {
-            error_login: "Username or Password wrong!"
-          })
-
-        } else {
-          req.session.userID = dbRes.rows[0].id_user;
-          req.session.user = username;
-          res.redirect("/");
-        }
-      });
-    }
-  });
+  }).catch(() => {
+    res.render("login", {
+      error_login: "Username or Password wrong!"
+    })
+  })
 });
+
 
 app.get('/forgotPassword', function(req, res) {
   if (req.session.user == undefined) {
