@@ -150,7 +150,6 @@ app.post("/login", urlencodedParser, function(req, res) {
     });
   });
 
-
   p.then(() => {
     let p2 = new Promise(function(resolve, reject){
       bcrypt.compare(userpassword, hash, function(errComp, resComp) {
@@ -244,7 +243,6 @@ app.post("/forgotPassword", urlencodedParser, function(req, res) {
     });
   }
 });
-
 
 
 app.get("/logout", function(req, res) {
@@ -520,17 +518,36 @@ app.post("/addReview", urlencodedParser, function(req, res) {
 app.post("/addFavourite", urlencodedParser, function(req, res) {
   let userID = req.session.userID;
   let bookID = req.session.bookID;
-  dbClient.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck) {
-    if (dbResDupCheck.rows.length == 0) {
+
+  let p = new Promise(function(resolve, reject) {
+    dbClient.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck) {
+      if(dbErrDupCheck || dbResDupCheck.rows.length != 0){
+        reject();
+      }
+      else{
+        resolve();
+      }
+    });
+  });
+  p.catch(() => {
+    res.redirect("error", 500);
+
+  }).then(() => {
+    return new Promise(function(resolve, reject) {
       dbClient.query("INSERT INTO users_favourites(id_user, id_book) VALUES($1, $2)", [userID, bookID], function(dbErr, dbRes) {
         if (dbErr == undefined) {
-          res.redirect("/search/" + bookID);
+          resolve();
         } else {
-          res.redirect("/error", 500);
+          reject();
         }
       });
-    }
-  });
+    });
+  }).then(() => {
+    res.redirect("/search/" + bookID)
+
+  }).catch(() => {
+    res.redirect("/error", 500);
+  })
 });
 
 app.post("/removeFavourite/:id/:where", urlencodedParser, function(req, res) {
@@ -538,20 +555,32 @@ app.post("/removeFavourite/:id/:where", urlencodedParser, function(req, res) {
   let bookID = req.params.id;
   let where = req.params.where;
   console.log(where);
-  dbClient.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck) {
-    if (dbResDupCheck.rows.length == 1) {
-      dbClient.query("DELETE FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErr, dbRes) {
-        if (dbErr == undefined) {
-          if (where == "favourites") {
-            res.redirect("/favourites");
-          } else {
-            res.redirect("/search/" + bookID);
-          }
+
+  let p = new Promise(function(resolve, reject) {
+    dbClient.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck) {
+      if (dbResDupCheck.rows.length == 1) {
+        resolve();
+      }
+      else{
+        reject();
+      }
+    });
+  });
+
+  p.catch(() => {
+    res.redirect("/error");
+  }).then(() => {
+    dbClient.query("DELETE FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErr, dbRes) {
+      if (dbErr == undefined) {
+        if (where == "favourites") {
+          res.redirect("/favourites");
         } else {
-          res.redirect("/error", 500);
+          res.redirect("/search/" + bookID);
         }
-      });
-    }
+      } else {
+        res.redirect("/error", 500);
+      }
+    });
   });
 });
 
@@ -654,49 +683,76 @@ let input = {
   let userID;
   let hash;
 
-  dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [input.name], function(dbErr, dbRes) {
-    if (dbRes.rows.length == 0 || dbErr != undefined) {
-      res.render("error", {
-        error_message: "Something went wrong!",
-        username: req.session.user
-      });
-    } else {
+  let p = new Promise(function(resolve, reject) {
+    dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [input.name], function(dbErr, dbRes) {
+      if (dbRes.rows.length == 0 || dbErr != undefined) {
+        reject();
+      }
+      else{
+        resolve(dbRes);
+      }
+    });
+  });
+
+  p.catch(() => {
+    console.log("here!")
+    res.render("error", {
+      error_message: "Something went wrong!",
+      username: req.session.user
+    });
+    return;
+  }).then((dbRes) => {
+    console.log("there!")
+    return new Promise(function(resolve, reject) {
       dbClient.query("SELECT id_user FROM users WHERE email = $1", [input.newEmail], function(dbDupErr, dbDupRes) {
         if (dbDupRes.rows.length != 0) {
-          res.render("account", {
-            error_email: "New Email already in use!",
-            username: req.session.user
-          });
-        } else {
+          reject("New Email already in use");
+        }
+        else{
           hash = dbRes.rows[0].password;
           userID = dbRes.rows[0].id_user;
-          bcrypt.compare(input.currentPassword, hash, function(errComp, resComp) {
-            if (!resComp) {
-              res.render("account", {
-                error_email: "Current Password doesn't match!",
-                username: req.session.user
-              });
-            } else {
-              dbClient.query("UPDATE users SET email = $1 WHERE id_user = $2", [input.newEmail, userID], function(dbErr, dbRes) {
-                if (dbErr == undefined) {
-                  res.render("account", {
-                    emailUpdated: true,
-                    loggedIn: req.session.loggedIn,
-                    username: req.session.user
-                  });
-                } else {
-                  res.render("error", {
-                    error_message: "An Error occured. Please try again later!",
-                    loggedIn: req.session.loggedIn,
-                    username: req.session.user
-                  });
-                }
-              });
-            }
-          });
+          resolve();
         }
       });
-    }
+    })
+  }).catch((msg) => {
+    console.log("catch 2!")
+      res.render("account", {
+        error_email: msg,
+        username: req.session.user
+      });
+      break;
+  }).then(() => {
+    console.log("fuck!")
+    return new Promise(function(resolve, reject) {
+      bcrypt.compare(input.currentPassword, hash, function(errComp, resComp) {
+        if (!resComp){
+          reject();
+        }
+        else{
+          resolve();
+        }
+      });
+    });
+  }).catch(() => {
+    console.log("shit shit shit!")
+    res.render("account", {
+      error_email: "Current Password doesn't match!",
+      username: req.session.user
+    });
+  }).then(() => {
+    console.log("oh fuck we are way too far1!")
+    dbClient.query("UPDATE users SET email = $1 WHERE id_user = $2", [input.newEmail, userID], function(dbErr, dbRes) {
+      if (dbErr == undefined) {
+        res.render("account", {
+          emailUpdated: true,
+          loggedIn: req.session.loggedIn,
+          username: req.session.user
+        });
+      } else {
+        res.render("error");
+      }
+    });
   });
 });
 
