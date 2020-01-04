@@ -399,56 +399,39 @@ app.get("/search/:id", function(req, res) {
   let resultOfLookup;
 
   let p = new Promise((resolve, reject) => {
-    dbClient.query("SELECT * FROM users_favourites WHERE id_book = $1 AND id_user = $2", [bookID, userID], function(dbErrLookupIfFavourite, dbResLookupIfFavourite) {
-      if (!dbErrLookupIfFavourite && dbResLookupIfFavourite.rows.length != 0) {
-        isFavourite = true;
-
+    dbClient.query("SELECT * FROM books WHERE id_book=$1", [bookID], function(dbErr, dbRes) {
+      if (!dbErr && dbRes.rows.length != 0) {
+        resultOfLookup = dbRes;
+        resolve();
       }
-      dbClient.query("SELECT * FROM books WHERE id_book=$1", [bookID], function(dbErr, dbRes) {
-        if (dbErr != undefined || dbRes.rows.length == 0) {
-          reject();
-        }
-        else{
-          resultOfLookup = dbRes;
-          resolve();
-        }
-      });
+      else{
+        reject();
+      }
     });
   });
 
   p.then(() => {
-    return new Promise((resolveP2, rejectP2) => {
+    return new Promise(function(resolve, reject) {
       dbClient.query("SELECT * FROM users_reviews WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrReviewDupCheck, dbResReviewDupCheck) {
-        if (!dbErrReviewDupCheck || dbResReviewDupCheck.rows.length != 0) {
+
+        if (!dbErrReviewDupCheck && dbResReviewDupCheck.rows.length != 0) {
           reviewed = true;
-          resolveP2();
-        }
-        else{
-          rejectP2();
         }
       });
-    });
-  })
-  .then(() => {
-    return new Promise(function(resolve, reject) {
+      dbClient.query("SELECT * FROM users_favourites WHERE id_book = $1 AND id_user = $2", [bookID, userID], function(dbErrLookupIfFavourite, dbResLookupIfFavourite) {
+        if (!dbErrLookupIfFavourite && dbResLookupIfFavourite.rows.length != 0) {
+          isFavourite = true;
+        }
+      });
       dbClient.query("SELECT avg(rating) FROM users_reviews WHERE id_book = $1", [bookID], function(errAvg, resAvg) {
         if(!errAvg){
           averageRating = resAvg.rows[0].avg;
-          resolve();
-        }
-        else{
-          reject();
         }
       });
-    });
-  })
-  .then(() => {
-    return new Promise(function(resolve, reject) {
       dbClient.query("SELECT users_reviews.review, users_reviews.rating, users.name FROM users_reviews INNER JOIN users ON users_reviews.id_user = users.id_user WHERE users_reviews.id_book=$1", [bookID], function(dbErrReview, dbResReview) {
         if (dbErrReview || dbResReview.rows.length == 0) {
           no_reviews = true;
           reviews = dbResReview.rows;
-
         }
         resolve();
       });
@@ -456,13 +439,52 @@ app.get("/search/:id", function(req, res) {
   })
   .then(() => {
     let dbRes = resultOfLookup;
-    googlebooks.search(dbRes.rows[0].isbn, options, function(error, results) {
-      results = results[0];
-      if (results == undefined) {
-        console.log("nothing found, searching deeper");
-        googlebooks.search(dbRes.rows[0].title, function(errorTwo, resultsTwo) {
-          results = resultsTwo[0];
+    let results;
+    let resultsTwo;
 
+    let searchp = new Promise(function(resolve, reject) {
+      googlebooks.search(dbRes.rows[0].isbn, options, function(error, resultsOne) {
+        if (resultsOne[0] == undefined) {
+          reject();
+        }
+        else{
+          results = resultsOne[0];
+          resolve();
+        }
+      });
+    });
+
+    let searchTwo = new Promise(function(resolve, reject){
+      googlebooks.search(dbRes.rows[0].title, function(errorISBN, resultsISBN) {
+        if (errorISBN) {
+        }
+        else{
+          resultsTwo = resultsISBN[0];
+          resolve();
+        }
+      });
+    })
+    searchp.then(() => {
+      res.render("book_closeup", {
+        id_book: dbRes.rows[0].id_book,
+        book: dbRes.rows[0],
+        reviews,
+        no_reviews: no_reviews,
+        loggedIn: req.session.loggedIn,
+        reviewed,
+        results,
+        isFavourite,
+        averageRating,
+        username: req.session.user
+      });
+    })
+    .catch(() => {
+      renderTwo();
+    });
+
+    let renderTwo = function() {
+      searchTwo.then(() => {
+        console.log("nothing found, searching deeper");
           res.render("book_closeup", {
             id_book: dbRes.rows[0].id_book,
             book: dbRes.rows[0],
@@ -470,29 +492,15 @@ app.get("/search/:id", function(req, res) {
             no_reviews: no_reviews,
             loggedIn: req.session.loggedIn,
             reviewed,
-            results,
+            results: resultsTwo,
             isFavourite,
             averageRating,
             username: req.session.user
           });
         });
       }
-      else{
-        res.render("book_closeup", {
-          id_book: dbRes.rows[0].id_book,
-          book: dbRes.rows[0],
-          reviews,
-          no_reviews: no_reviews,
-          loggedIn: req.session.loggedIn,
-          reviewed,
-          results,
-          isFavourite,
-          averageRating,
-          username: req.session.user
-        });
-      }
-    });
-  }).catch(() => {
+    })
+  .catch(() => {
     res.redirect("/error");
   });
 });
