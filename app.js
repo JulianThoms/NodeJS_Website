@@ -1,17 +1,17 @@
 /*jshint esversion: 6 */
 /* jshint node: true */
 
-var express = require("express");
-var pg = require("pg");
-var bodyParser = require("body-parser");
-var session = require("express-session");
+const express = require("express");
+const pg = require("pg");
+const bodyParser = require("body-parser");
+const session = require("express-session");
 const bcrypt = require('bcryptjs');
 //const nodemailer = require("nodemailer");
 //let transporter = nodemailer.createTransport(transport[, defaults]); //only one required
 const saltRounds = 10;
-var googlebooks = require('google-books-search');
+const googlebooks = require('google-books-search');
 
-var options = {
+const options = {
   field: 'isbn',
   offset: 0,
   limit: 1
@@ -24,16 +24,16 @@ if (CON_STRING == undefined) {
 }
 
 pg.defaults.ssl = true;
-var dbClient = new pg.Client(CON_STRING);
+const dbClient = new pg.Client(CON_STRING);
 dbClient.connect();
 
-var urlencodedParser = bodyParser.urlencoded({
+const urlencodedParser = bodyParser.urlencoded({
   extended: false
 });
 
 const PORT = 3000;
 
-var app = express();
+const app = express();
 
 app.use(session({
   secret: "dwai2§dkjwao210dwkalcklxkd3d013ie2kdlkwla4i29keedlkccvoit32011",
