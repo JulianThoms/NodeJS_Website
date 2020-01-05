@@ -431,8 +431,8 @@ app.get("/search/:id", function(req, res) {
       dbClient.query("SELECT users_reviews.review, users_reviews.rating, users.name FROM users_reviews INNER JOIN users ON users_reviews.id_user = users.id_user WHERE users_reviews.id_book=$1", [bookID], function(dbErrReview, dbResReview) {
         if (dbErrReview || dbResReview.rows.length == 0) {
           no_reviews = true;
-          reviews = dbResReview.rows;
         }
+        reviews = dbResReview.rows;
         resolve();
       });
     });
