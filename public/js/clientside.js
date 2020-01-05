@@ -1,55 +1,50 @@
-let star1 = document.getElementById('star1');
-let star2 = document.getElementById('star2');
-let star3 = document.getElementById('star3');
-let star4 = document.getElementById('star4');
-let star5 = document.getElementById('star5');
-let stars = [star1, star2, star3, star4, star5];
+const starsArr = [document.getElementById('star1'), document.getElementById('star2'), document.getElementById('star3'), document.getElementById('star4'), document.getElementById('star5')];
 let rating_input = document.getElementById('rating_input');
 let score = 0;
 
 let locked = false;
 
 
-for(const star of stars){
+for (const star of starsArr) {
   star.addEventListener("mouseover", gold);
   star.addEventListener("mouseout", gray);
   star.addEventListener("mouseup", lock);
 }
 
-function gold(){
-  console.log("hover, id = "+this.id);
-  switch(this.id){
+
+function gold() {
+  switch (this.id) {
     case "star5":
-      star5.src = "/images/star_gold.png";
+      starsArr[4].src = "/images/star_gold.png";
     case "star4":
-      star4.src = "/images/star_gold.png";
+      starsArr[3].src = "/images/star_gold.png";
     case "star3":
-      star3.src = "/images/star_gold.png";
+      starsArr[2].src = "/images/star_gold.png";
     case "star2":
-      star2.src = "/images/star_gold.png";
+      starsArr[1].src = "/images/star_gold.png";
     case "star1":
-      star1.src = "/images/star_gold.png";
+      starsArr[0].src = "/images/star_gold.png";
   }
-//  x.src = "/images/star_gold.png";
+
 }
-function gray(){
-  switch(this.id){
+
+function gray() {
+  switch (this.id) {
     case "star5":
-      star5.src = "/images/star_gray.png";
+      starsArr[4].src = "/images/star_gray.png";
     case "star4":
-      star4.src = "/images/star_gray.png";
+      starsArr[3].src = "/images/star_gray.png";
     case "star3":
-      star3.src = "/images/star_gray.png";
+      starsArr[2].src = "/images/star_gray.png";
     case "star2":
-      star2.src = "/images/star_gray.png";
+      starsArr[1].src = "/images/star_gray.png";
     case "star1":
-      star1.src = "/images/star_gray.png";
+      starsArr[0].src = "/images/star_gray.png";
   }
 }
 
-function lock(){
-  console.log("clicked by "+this.id)
-  switch(this.id){
+function lock() {
+  switch (this.id) {
     case "star5":
       score = 5;
       break;
@@ -66,16 +61,14 @@ function lock(){
       score = 1;
       break;
   }
-  if(locked == false){
-    for(const star of stars){
-      console.log("removing")
+  if (locked == false) {
+    for (const star of starsArr) {
       star.removeEventListener("mouseover", gold);
       star.removeEventListener("mouseout", gray);
     }
     locked = true;
   } else {
-    for(const star of stars) {
-      console.log("adding")
+    for (const star of starsArr) {
       star.addEventListener("mouseover", gold);
       star.addEventListener("mouseout", gray);
     }

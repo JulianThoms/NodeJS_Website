@@ -141,8 +141,7 @@ app.post("/login", urlencodedParser, function(req, res) {
     dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [username], function(dbErr, dbRes) {
       if (username == "" || dbRes.rows.length == 0 || dbErr != undefined) {
         reject();
-      }
-      else{
+      } else {
         hash = dbRes.rows[0].password;
         userID = dbRes.rows[0].id_user;
         resolve();
@@ -155,14 +154,13 @@ app.post("/login", urlencodedParser, function(req, res) {
       bcrypt.compare(userpassword, hash, function(errComp, resComp) {
         if (!resComp) {
           reject(errComp);
-        }
-        else{
+        } else {
           resolve();
         }
       });
     });
   }).then(() => {
-    req.session.userID =userID;
+    req.session.userID = userID;
     req.session.user = username;
     res.redirect("/");
   }).catch((errComp) => {
@@ -186,7 +184,7 @@ app.post("/forgotPassword", urlencodedParser, function(req, res) {
   const userEmail = req.body.email;
   const userSecret = req.body.answer_passwort_reset;
   const userPassword = req.body.password;
-	let hash;
+  let hash;
   let id_user;
 
   if (userPassword !== req.body.password_check) {
@@ -199,8 +197,7 @@ app.post("/forgotPassword", urlencodedParser, function(req, res) {
         if (dbRes.rows.length == 1) {
           id_user = dbRes.rows[0].id_user;
           resolve();
-        }
-        else{
+        } else {
           reject();
         }
       });
@@ -209,10 +206,9 @@ app.post("/forgotPassword", urlencodedParser, function(req, res) {
     p.then(() => {
       return new Promise((resolve, reject) => {
         bcrypt.hash(userPassword, saltRounds, function(err, hashedPassword) {
-          if(err){
+          if (err) {
             reject();
-          }
-          else{
+          } else {
             hash = hashedPassword;
             resolve();
           }
@@ -223,8 +219,7 @@ app.post("/forgotPassword", urlencodedParser, function(req, res) {
         dbClient.query("UPDATE users SET password = $1 WHERE id_user = $2", [hash, id_user], function(dbErr, dbRes) {
           if (dbErr == undefined) {
             resolve();
-          }
-          else{
+          } else {
             reject();
           }
         });
@@ -288,10 +283,9 @@ app.get("/browse", function(req, res) {
 
   let p = new Promise(function(resolve, reject) {
     dbClient.query("SELECT * FROM books TABLESAMPLE SYSTEM (10)", function(dbErr, dbResRandom) {
-      if (dbResRandom != undefined && dbResRandom.rows.length > 0){
+      if (dbResRandom != undefined && dbResRandom.rows.length > 0) {
         resolve(dbResRandom);
-      }
-      else{
+      } else {
         reject();
       }
     });
@@ -327,24 +321,24 @@ app.get("/favourites", function(req, res) {
   if (id != undefined) {
     let p = new Promise(function(resolve, reject) {
       dbClient.query("SELECT books.title, books.id_book FROM (books INNER JOIN users_favourites ON books.id_book = users_favourites.id_book) INNER JOIN users ON users.id_user = users_favourites.id_user WHERE users.id_user = $1 LIMIT 50", [id], function(dbErr, dbRes) {
-      if (!dbErr){
-        resolve(dbRes);
-      }
-      else{
-      reject();
-    }});
+        if (!dbErr) {
+          resolve(dbRes);
+        } else {
+          reject();
+        }
+      });
     });
 
     p.then((dbRes) => {
       res.render("favourites", {
         favourites: dbRes.rows,
-      	username: req.session.user,
+        username: req.session.user,
         loggedIn: req.session.loggedIn
       });
     }).catch(() => {
       res.render("favourites", {
         loggedIn: req.session.loggedIn,
-   		  username: req.session.user
+        username: req.session.user
       });
     });
   }
@@ -361,8 +355,7 @@ app.post("/search", urlencodedParser, function(req, res) {
       dbClient.query("SELECT * FROM books WHERE title ILIKE $1 OR author ILIKE $1 OR year = $3 OR isbn LIKE $2 LIMIT 50", ['%' + search + '%', search + '%', search], function(dbErr, dbRes) {
         if (dbRes == undefined || dbRes.rows.length == 0) {
           reject(errMsg);
-        }
-        else {
+        } else {
           resolve(dbRes);
         }
       });
@@ -403,88 +396,84 @@ app.get("/search/:id", function(req, res) {
       if (!dbErr && dbRes.rows.length != 0) {
         resultOfLookup = dbRes;
         resolve();
-      }
-      else{
+      } else {
         reject();
       }
     });
   });
 
   p.then(() => {
-    return new Promise(function(resolve, reject) {
-      dbClient.query("SELECT * FROM users_reviews WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrReviewDupCheck, dbResReviewDupCheck) {
+      return new Promise(function(resolve, reject) {
+        dbClient.query("SELECT * FROM users_reviews WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrReviewDupCheck, dbResReviewDupCheck) {
 
-        if (!dbErrReviewDupCheck && dbResReviewDupCheck.rows.length != 0) {
-          reviewed = true;
-        }
-      });
-      dbClient.query("SELECT * FROM users_favourites WHERE id_book = $1 AND id_user = $2", [bookID, userID], function(dbErrLookupIfFavourite, dbResLookupIfFavourite) {
-        if (!dbErrLookupIfFavourite && dbResLookupIfFavourite.rows.length != 0) {
-          isFavourite = true;
-        }
-      });
-      dbClient.query("SELECT avg(rating) FROM users_reviews WHERE id_book = $1", [bookID], function(errAvg, resAvg) {
-        if(!errAvg){
-          averageRating = resAvg.rows[0].avg;
-        }
-      });
-      dbClient.query("SELECT users_reviews.review, users_reviews.rating, users.name FROM users_reviews INNER JOIN users ON users_reviews.id_user = users.id_user WHERE users_reviews.id_book=$1", [bookID], function(dbErrReview, dbResReview) {
-        if (dbErrReview || dbResReview.rows.length == 0) {
-          no_reviews = true;
-        }
-        reviews = dbResReview.rows;
-        resolve();
-      });
-    });
-  })
-  .then(() => {
-    let dbRes = resultOfLookup;
-    let results;
-    let resultsTwo;
-
-    let searchp = new Promise(function(resolve, reject) {
-      googlebooks.search(dbRes.rows[0].isbn, options, function(error, resultsOne) {
-        if (resultsOne[0] == undefined) {
-          reject();
-        }
-        else{
-          results = resultsOne[0];
+          if (!dbErrReviewDupCheck && dbResReviewDupCheck.rows.length != 0) {
+            reviewed = true;
+          }
+        });
+        dbClient.query("SELECT * FROM users_favourites WHERE id_book = $1 AND id_user = $2", [bookID, userID], function(dbErrLookupIfFavourite, dbResLookupIfFavourite) {
+          if (!dbErrLookupIfFavourite && dbResLookupIfFavourite.rows.length != 0) {
+            isFavourite = true;
+          }
+        });
+        dbClient.query("SELECT avg(rating) FROM users_reviews WHERE id_book = $1", [bookID], function(errAvg, resAvg) {
+          if (!errAvg) {
+            averageRating = resAvg.rows[0].avg;
+          }
+        });
+        dbClient.query("SELECT users_reviews.review, users_reviews.rating, users.name FROM users_reviews INNER JOIN users ON users_reviews.id_user = users.id_user WHERE users_reviews.id_book=$1", [bookID], function(dbErrReview, dbResReview) {
+          if (dbErrReview || dbResReview.rows.length == 0) {
+            no_reviews = true;
+          }
+          reviews = dbResReview.rows;
           resolve();
-        }
-      });
-    });
-
-    let searchTwo = new Promise(function(resolve, reject){
-      googlebooks.search(dbRes.rows[0].title, function(errorISBN, resultsISBN) {
-        if (errorISBN) {
-        }
-        else{
-          resultsTwo = resultsISBN[0];
-          resolve();
-        }
+        });
       });
     })
-    searchp.then(() => {
-      res.render("book_closeup", {
-        id_book: dbRes.rows[0].id_book,
-        book: dbRes.rows[0],
-        reviews,
-        no_reviews: no_reviews,
-        loggedIn: req.session.loggedIn,
-        reviewed,
-        results,
-        isFavourite,
-        averageRating,
-        username: req.session.user
-      });
-    })
-    .catch(() => {
-      renderTwo();
-    });
+    .then(() => {
+      let dbRes = resultOfLookup;
+      let results;
+      let resultsTwo;
 
-    let renderTwo = function() {
-      searchTwo.then(() => {
-        console.log("nothing found, searching deeper");
+      let searchp = new Promise(function(resolve, reject) {
+        googlebooks.search(dbRes.rows[0].isbn, options, function(error, resultsOne) {
+          if (resultsOne[0] == undefined) {
+            reject();
+          } else {
+            results = resultsOne[0];
+            resolve();
+          }
+        });
+      });
+
+      let searchTwo = new Promise(function(resolve, reject) {
+        googlebooks.search(dbRes.rows[0].title, function(errorISBN, resultsISBN) {
+          if (errorISBN) {} else {
+            resultsTwo = resultsISBN[0];
+            resolve();
+          }
+        });
+      })
+      searchp.then(() => {
+          res.render("book_closeup", {
+            id_book: dbRes.rows[0].id_book,
+            book: dbRes.rows[0],
+            reviews,
+            no_reviews: no_reviews,
+            loggedIn: req.session.loggedIn,
+            reviewed,
+            results,
+            isFavourite,
+            averageRating,
+            username: req.session.user
+          });
+        })
+        .catch(() => {
+          renderTwo();
+        });
+
+      let renderTwo = function() {
+        searchTwo.then(() => {
+          console.log("nothing found, searching deeper");
           res.render("book_closeup", {
             id_book: dbRes.rows[0].id_book,
             book: dbRes.rows[0],
@@ -500,9 +489,9 @@ app.get("/search/:id", function(req, res) {
         });
       }
     })
-  .catch(() => {
-    res.redirect("/error");
-  });
+    .catch(() => {
+      res.redirect("/error");
+    });
 });
 
 
@@ -536,31 +525,30 @@ app.post("/addFavourite", urlencodedParser, function(req, res) {
   let bookID = req.session.bookID;
 
   let p = new Promise(function(resolve, reject) {
-    dbClient.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck) {
-      if(dbErrDupCheck || dbResDupCheck.rows.length != 0){
-        reject();
-      }
-      else{
-        resolve();
-      }
-    });
-  })
-  .then(() => {
-    return new Promise(function(resolve, reject) {
-      dbClient.query("INSERT INTO users_favourites(id_user, id_book) VALUES($1, $2)", [userID, bookID], function(dbErr, dbRes) {
-        if (dbErr == undefined) {
-          resolve();
-        } else {
+      dbClient.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck) {
+        if (dbErrDupCheck || dbResDupCheck.rows.length != 0) {
           reject();
+        } else {
+          resolve();
         }
       });
-    });
-  }).then(() => {
-    res.redirect("/search/" + bookID)
+    })
+    .then(() => {
+      return new Promise(function(resolve, reject) {
+        dbClient.query("INSERT INTO users_favourites(id_user, id_book) VALUES($1, $2)", [userID, bookID], function(dbErr, dbRes) {
+          if (dbErr == undefined) {
+            resolve();
+          } else {
+            reject();
+          }
+        });
+      });
+    }).then(() => {
+      res.redirect("/search/" + bookID)
 
-  }).catch(() => {
-    res.redirect("/error", 500);
-  })
+    }).catch(() => {
+      res.redirect("/error", 500);
+    })
 });
 
 app.post("/removeFavourite/:id/:where", urlencodedParser, function(req, res) {
@@ -573,29 +561,28 @@ app.post("/removeFavourite/:id/:where", urlencodedParser, function(req, res) {
     dbClient.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck) {
       if (dbResDupCheck.rows.length == 1) {
         resolve();
-      }
-      else{
+      } else {
         reject();
       }
     });
   });
 
   p.then(() => {
-    dbClient.query("DELETE FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErr, dbRes) {
-      if (dbErr == undefined) {
-        if (where == "favourites") {
-          res.redirect("/favourites");
+      dbClient.query("DELETE FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErr, dbRes) {
+        if (dbErr == undefined) {
+          if (where == "favourites") {
+            res.redirect("/favourites");
+          } else {
+            res.redirect("/search/" + bookID);
+          }
         } else {
-          res.redirect("/search/" + bookID);
+          res.redirect("/error", 500);
         }
-      } else {
-        res.redirect("/error", 500);
-      }
+      });
+    })
+    .catch(() => {
+      res.redirect("/error");
     });
-  })
-  .catch(() => {
-    res.redirect("/error");
-  });
 });
 
 
@@ -620,8 +607,7 @@ app.post("/changePassword", urlencodedParser, function(req, res) {
       dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [input.name], function(dbErr, dbRes) {
         if (dbRes.rows.length == 0 || dbErr != undefined) {
           reject();
-        }
-        else{
+        } else {
           hash = dbRes.rows[0].password;
           userID = dbRes.rows[0].id_user;
           resolve();
@@ -630,61 +616,57 @@ app.post("/changePassword", urlencodedParser, function(req, res) {
     });
 
     p.then(() => {
-      return new Promise(function(resolve, reject) {
-        bcrypt.compare(input.currentPassword, hash, function(errComp, resComp) {
-          if (!resComp) {
-            reject("Current Password doesn't match!");
-          }
-          else{
-            resolve();
-          }
+        return new Promise(function(resolve, reject) {
+          bcrypt.compare(input.currentPassword, hash, function(errComp, resComp) {
+            if (!resComp) {
+              reject("Current Password doesn't match!");
+            } else {
+              resolve();
+            }
+          });
         });
-      });
 
-    }).then(() => {
-      return new Promise(function(resolve, reject) {
-        bcrypt.hash(input.newPassword, saltRounds, function(err, hashNewPassword) {
-          if (err == undefined){
-            hash = hashNewPassword;
-            resolve();
-          }
-          else{
-            reject("error");
-          }
+      }).then(() => {
+        return new Promise(function(resolve, reject) {
+          bcrypt.hash(input.newPassword, saltRounds, function(err, hashNewPassword) {
+            if (err == undefined) {
+              hash = hashNewPassword;
+              resolve();
+            } else {
+              reject("error");
+            }
+          });
         });
-      });
-    }).then(() => {
-      return new Promise(function(resolve, reject) {
-        dbClient.query("UPDATE users SET password = $1 WHERE id_user = $2", [hash, userID], function(dbErr, dbRes) {
-          if (dbErr == undefined) {
-            resolve();
-          }
-          else{
-            reject();
-          }
+      }).then(() => {
+        return new Promise(function(resolve, reject) {
+          dbClient.query("UPDATE users SET password = $1 WHERE id_user = $2", [hash, userID], function(dbErr, dbRes) {
+            if (dbErr == undefined) {
+              resolve();
+            } else {
+              reject();
+            }
+          });
         });
-      });
-    }).then(() => {
-      res.render("account", {
-        passwordUpdated: true,
-        loggedIn: req.session.loggedIn,
-        username: req.session.user
-      });
-    })
-    .catch((message) => {
-      if (message === "error"){
-        res.render("error", {
-          error_message: "An Error occured. Please try again later!",
-          username: req.session.user
-        });
-      }
-      else{
+      }).then(() => {
         res.render("account", {
-          error_password: message,
+          passwordUpdated: true,
+          loggedIn: req.session.loggedIn,
           username: req.session.user
         });
-      }
-    });
+      })
+      .catch((message) => {
+        if (message === "error") {
+          res.render("error", {
+            error_message: "An Error occured. Please try again later!",
+            username: req.session.user
+          });
+        } else {
+          res.render("account", {
+            error_password: message,
+            username: req.session.user
+          });
+        }
+      });
   }
 });
 
@@ -707,7 +689,7 @@ app.post("/changeEmail", urlencodedParser, function(req, res) {
     return new Promise(function(resolve, reject) {
       dbClient.query("SELECT id_user FROM users WHERE email = $1", [input.newEmail], function(dbDupErr, dbDupRes) {
         if (dbDupRes.rows.length != 0) reject(2);
-        else{
+        else {
           hash = dbRes.rows[0].password;
           userID = dbRes.rows[0].id_user;
           resolve();
@@ -734,7 +716,7 @@ app.post("/changeEmail", urlencodedParser, function(req, res) {
       }
     });
   }).catch((errorNr) => {
-    switch(errorNr){
+    switch (errorNr) {
       case 1:
         res.render("error", {
           error_message: "Something went wrong!",
