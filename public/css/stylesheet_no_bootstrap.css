@@ -1,21 +1,66 @@
 html {
-	color: #eaebeb;
-}
-div {
-	color: #eaebeb;
+  color: #eaebeb;
+  overflow-y: scroll;
 }
 
-body{
+div {
+  color: #eaebeb;
+}
+
+body {
   background-color: #282C34;
   height: 100%;
   padding-top: 55px;
   padding-bottom: 55px;
 }
-footer{
-    color: #282C34;
-    background-color: rgb(82, 140, 142);
-  }
 
-.star{
-	height: 1.8rem;
+footer {
+  color: #282C34;
+  background-color: rgb(82, 140, 142);
+  border-top: 0.5px solid black;
+}
+
+nav {
+  border-bottom: 0.5px solid black;
+}
+
+.star {
+  height: 1.8rem;
+}
+
+.divider {
+  border-bottom: 2px solid #343A40;
+}
+
+.btnWhiteText {
+  color: white;
+}
+
+.grayBackground {
+  background-color: #343A40;
+}
+
+.divBtnBorder {
+  border-bottom: 1px solid #343A40"
+
+}
+
+.deleteBtn {
+  background-color: #69343a;
+}
+
+.addBtn {
+  background-color: #015718;
+}
+
+.fixedWidth {
+  width: 9rem;
+}
+
+.cardPaddingTop {
+  padding-top: 1.25rem;
+}
+
+.cardPaddingBottom {
+  padding-bottom: 0;
 }

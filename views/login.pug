@@ -5,13 +5,13 @@ block title
 
 block content
   div(class="row text-center h-100")
-  
+
     div(class="col-2")
     div(class="col-8 align-self-center justify-content-center")
 
       if loggedIn
         h1(class="text-muted display-3") Log In
-        div(class="row my-5" style="border-bottom: 1px solid #343A40")
+        div(class="row my-5 divider")
         h1(class="display-4") You are already logged in
         h1(class="display-2") #{username}
         br
@@ -19,7 +19,7 @@ block content
           button(type="submit", class="btn btn-outline-light btn-lg") Logout
       else
         h1(class="display-3") Log In
-        div(class="row my-5" style="border-bottom: 1px solid #343A40")
+        div(class="row my-5 divider")
         form(action="/login" method="post" class="form-signin")
           div(class="form-group")
             input(type="text", class="form-control text-light bg-dark", id="inputUsername", placeholder="Username", name="username")
@@ -36,4 +36,4 @@ block content
             div(class="alert alert-success") Updated Password Successfully!
     div(class="col-2")
 
-      
+

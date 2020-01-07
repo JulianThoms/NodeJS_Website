@@ -8,13 +8,13 @@ block content
     br
     br
     div(class="col-2")
-    
+
     div(class="col-8 align-self-center justify-content-center")
       if loggedIn
         h1(class="text-muted") Sign Up
-        
-        div(class="row my-5" style="border-bottom: 1px solid #343A40")
-        
+
+        div(class="row my-5 divider")
+
         h1(class="display-4") You are already logged in
         h1(class="display-2") #{username}
         br
@@ -22,7 +22,7 @@ block content
       else
         h1(class="display-3") Sign Up
 
-        div(class="row my-5" style="border-bottom: 1px solid #343A40")
+        div(class="row my-5 divider")
 
         form(action="/signup" method="post" class="form-signin")
           div(class="form-group")
@@ -45,7 +45,7 @@ block content
           div(class="alert alert-warning") #{error_signup}
 
     div(class="col-2")
-    
 
 
-      
+
+

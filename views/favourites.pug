@@ -6,19 +6,19 @@ block title
 block content
   div(class="row justify-content-center")
     h1(class="display-3") Favourites
-    
-  div(class="row my-5" style="border-bottom: 1px solid #343A40")
+
+  div(class="row my-5 divider")
 
   div(class="row align-items-center")
-    if favourites != undefined
+    if favourites[0] != undefined
       each favourite in favourites
-        div(class="col-8")
-          a(href="/search/"+favourite.id_book class="list-group-item list-group-item-action text-light btn btn-block" style="background-color: #343A40")=favourite.title
-        div(class="col-4 ")
+        div(class="col-9")
+          a(href="/search/"+favourite.id_book class="text-light btn btn-block grayBackground")=favourite.title
+        div(class="col-3")
           form(action="/removeFavourite/"+favourite.id_book+"/favourites" method="post")
-            button(type="submit" class="btn btn-block" style="background-color:#40343a; color:white; border: none") Remove
-    
+            button(type="submit" class="btn btn-block text-light btn-danger") Remove
+
     else
       h1 Nothing here! Start browsing to find books to add as your favourites!
 
-      a(href="browse" class="btn btn-outline-secondary btn-block my-4" style="color:white") Browse
+      a(href="browse" class="btn btn-outline-secondary btn-lg btn-block my-4 text-light") Browse

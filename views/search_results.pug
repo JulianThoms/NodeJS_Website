@@ -7,13 +7,13 @@ block content
 
   div(class="row")
     h1(class="col display-3") Your search results, #{username}
-  div(class="row my-5" style="border-bottom: 1px solid #343A40")
+  div(class="row my-5 divider")
   div(class="row text-center")
     div(class="col-1")
     if search_results != undefined
       div(class="col list-group")
         each result in search_results
-          a(href="/search/"+result.id_book class="list-group-item list-group-item-action text-light my-2" style="background-color: #343A40")=result.title
+          a(href="/search/"+result.id_book class="btn btn-lg text-light my-3 grayBackground")=result.title
     else
       div(class="col-10")
         div(Class="row display-4")=error_message

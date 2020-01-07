@@ -7,7 +7,7 @@ block title
 block content
   div(class="row justify-content-center")
     h1(class="col display-3") Browse Books
-  div(class="row my-5" style="border-bottom: 1px solid #343A40")
+  div(class="row my-5 divider")
   div(class="row text-center justify-content-center")
     each book in books
-      a(class="col-5 my-3 mx-3 btn text-light bg-dark" href="search/"+book.id_book)=book.title
+      a(class="col-9 my-3 mx-3 btn text-light bg-dark btn-lg" href="search/"+book.id_book)=book.title

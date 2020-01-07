@@ -10,9 +10,9 @@ block content
       h1(class=" col display-3 align-self-center") Welcome #{username}
     else
       h1(class="col display-3 align-self-center") Welcome!
-  div(class="row my-5" style="border-bottom: 2px solid #343A40")
+  div(class="row my-5 divider")
 
-  
+
   if loggedOut
     div(class="row justify-content-center my-3")
       div(class="col-6 alert alert-warning alert-dismissible fade show" role="alert")
@@ -20,17 +20,17 @@ block content
         p We hope to see you back soon!
         button(type="button" class="close" data-dismiss="alert" aria-label="Close")
           span(aria-hidden="true") &times;
-  
+
   if !loggedIn
-    a(class="display-4 btn btn-lg btn-outline-secondary btn-block" href="/login" style="color:white") Please Login to use this Website!
-  
+    a(class="display-4 btn btn-lg btn-outline-secondary btn-block text-light" href="/login") Please Login to use this Website!
+
   else
     div(class="row justify-content-center")
       h1(class="display-4") Search our Catalog
       div(class="col-8")
         form(class="form my-2" action="/search" method="post")
           input(class="form-control my-3" type="search" name="searchTerm" placeholder="Write a Title, Author, ISBN ..." aria-label="Search" required)
-          button(class="btn btn-outline-secondary btn-block my-2 my-sm-0" type="submit" style="color:white") Search
+          button(class="btn btn-outline-secondary btn-block my-2 my-sm-0 text-light" type="submit") Search
         form(class="form my-2" action="/searchRandom" method="post")
-          button(class="btn btn-outline-secondary btn-block my-2 my-sm-0" type="submit" style="color:white") I'm feeling lucky
-    div(class="row my-5" style="border-bottom: 1px solid #343A40")
+          button(class="btn btn-outline-secondary btn-block my-2 my-sm-0 text-light" type="submit") I'm feeling lucky
+    div(class="row my-5 divider")
