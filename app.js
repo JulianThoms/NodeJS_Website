@@ -2,7 +2,7 @@
 /* jshint node: true */
 
 const express = require("express");
-const { createClient } = require("./db");
+const { createPool } = require("./db");
 const session = require("express-session");
 const bcrypt = require('bcryptjs');
 const saltRounds = 10;
@@ -20,8 +20,9 @@ if (CON_STRING == undefined) {
   process.exit(1);
 }
 
-const dbClient = createClient(CON_STRING);
-dbClient.connect().catch(function(err) {
+const dbPool = createPool(CON_STRING);
+//checks the connection on startup
+dbPool.query("SELECT 1").catch(function(err) {
   console.log("Error: Could not connect to the database (" + err.message + "). Check DB_CON_STRING!");
   process.exit(1);
 });
@@ -107,7 +108,7 @@ app.post("/signup", urlencodedParser, function(req, res) {
     });
 
   } else {
-    dbClient.query("SELECT * FROM users WHERE name = $1 OR email = $2", [username, email], function(dbErr, dbRes) {
+    dbPool.query("SELECT * FROM users WHERE name = $1 OR email = $2", [username, email], function(dbErr, dbRes) {
       if (dbRes.rows.length > 0) {
         res.render("signup", {
           error_signup: "Username already taken! Please choose a different one"
@@ -115,7 +116,7 @@ app.post("/signup", urlencodedParser, function(req, res) {
       } else {
         //this hashes password
         bcrypt.hash(userpassword, saltRounds, function(err, hash) {
-          dbClient.query("INSERT INTO users (name, password, answer_passwort_reset, email) VALUES ($1, $2, $3, $4)", [username, hash, security_question, email], function(dbErr, dbRes) {
+          dbPool.query("INSERT INTO users (name, password, answer_passwort_reset, email) VALUES ($1, $2, $3, $4)", [username, hash, security_question, email], function(dbErr, dbRes) {
             if (dbErr != undefined) {
               console.log(dbErr);
               res.redirect("/error");
@@ -137,7 +138,7 @@ app.post("/login", urlencodedParser, function(req, res) {
   let hash;
 
   let p = new Promise(function(resolve, reject) {
-    dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [username], function(dbErr, dbRes) {
+    dbPool.query("SELECT id_user, password FROM users WHERE name = $1", [username], function(dbErr, dbRes) {
       if (username == "" || dbRes.rows.length == 0 || dbErr != undefined) {
         reject();
       } else {
@@ -192,7 +193,7 @@ app.post("/forgotPassword", urlencodedParser, function(req, res) {
     });
   } else {
     let p = new Promise(function(resolve, reject) {
-      dbClient.query("SELECT * FROM users WHERE name = $1 AND email = $2 AND answer_passwort_reset = $3", [username, userEmail, userSecret], function(dbErr, dbRes) {
+      dbPool.query("SELECT * FROM users WHERE name = $1 AND email = $2 AND answer_passwort_reset = $3", [username, userEmail, userSecret], function(dbErr, dbRes) {
         if (dbRes.rows.length == 1) {
           id_user = dbRes.rows[0].id_user;
           resolve();
@@ -215,7 +216,7 @@ app.post("/forgotPassword", urlencodedParser, function(req, res) {
       });
     }).then(() => {
       return new Promise((resolve, reject) => {
-        dbClient.query("UPDATE users SET password = $1 WHERE id_user = $2", [hash, id_user], function(dbErr, dbRes) {
+        dbPool.query("UPDATE users SET password = $1 WHERE id_user = $2", [hash, id_user], function(dbErr, dbRes) {
           if (dbErr == undefined) {
             resolve();
           } else {
@@ -281,7 +282,7 @@ app.get("/browse", function(req, res) {
 
 
   let p = new Promise(function(resolve, reject) {
-    dbClient.query("SELECT * FROM books TABLESAMPLE SYSTEM (10)", function(dbErr, dbResRandom) {
+    dbPool.query("SELECT * FROM books TABLESAMPLE SYSTEM (10)", function(dbErr, dbResRandom) {
       if (dbResRandom != undefined && dbResRandom.rows.length > 0) {
         resolve(dbResRandom);
       } else {
@@ -319,7 +320,7 @@ app.get("/favourites", function(req, res) {
   let id = req.session.userID;
   if (id != undefined) {
     let p = new Promise(function(resolve, reject) {
-      dbClient.query("SELECT books.title, books.id_book FROM (books INNER JOIN users_favourites ON books.id_book = users_favourites.id_book) INNER JOIN users ON users.id_user = users_favourites.id_user WHERE users.id_user = $1 LIMIT 50", [id], function(dbErr, dbRes) {
+      dbPool.query("SELECT books.title, books.id_book FROM (books INNER JOIN users_favourites ON books.id_book = users_favourites.id_book) INNER JOIN users ON users.id_user = users_favourites.id_user WHERE users.id_user = $1 LIMIT 50", [id], function(dbErr, dbRes) {
         if (!dbErr) {
           resolve(dbRes);
         } else {
@@ -351,7 +352,7 @@ app.post("/search", urlencodedParser, function(req, res) {
 
   } else {
     let p = new Promise((resolve, reject) => {
-      dbClient.query("SELECT * FROM books WHERE title ILIKE $1 OR author ILIKE $1 OR year = $3 OR isbn LIKE $2 LIMIT 50", ['%' + search + '%', search + '%', search], function(dbErr, dbRes) {
+      dbPool.query("SELECT * FROM books WHERE title ILIKE $1 OR author ILIKE $1 OR year = $3 OR isbn LIKE $2 LIMIT 50", ['%' + search + '%', search + '%', search], function(dbErr, dbRes) {
         if (dbRes == undefined || dbRes.rows.length == 0) {
           reject(errMsg);
         } else {
@@ -382,6 +383,9 @@ app.get("/search/:id", function(req, res) {
 
   const bookID = req.params.id;
   req.session.bookID = bookID;
+  //set by /addReview when no rating was chosen
+  const error_review = req.session.reviewError;
+  delete req.session.reviewError;
   const userID = req.session.userID;
   let isFavourite = false;
   let reviews;
@@ -391,7 +395,7 @@ app.get("/search/:id", function(req, res) {
   let resultOfLookup;
 
   let p = new Promise((resolve, reject) => {
-    dbClient.query("SELECT * FROM books WHERE id_book=$1", [bookID], function(dbErr, dbRes) {
+    dbPool.query("SELECT * FROM books WHERE id_book=$1", [bookID], function(dbErr, dbRes) {
       if (!dbErr && dbRes.rows.length != 0) {
         resultOfLookup = dbRes;
         resolve();
@@ -402,30 +406,18 @@ app.get("/search/:id", function(req, res) {
   });
 
   p.then(() => {
-      return new Promise(function(resolve, reject) {
-        dbClient.query("SELECT * FROM users_reviews WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrReviewDupCheck, dbResReviewDupCheck) {
-
-          if (!dbErrReviewDupCheck && dbResReviewDupCheck.rows.length != 0) {
-            reviewed = true;
-          }
-        });
-        dbClient.query("SELECT * FROM users_favourites WHERE id_book = $1 AND id_user = $2", [bookID, userID], function(dbErrLookupIfFavourite, dbResLookupIfFavourite) {
-          if (!dbErrLookupIfFavourite && dbResLookupIfFavourite.rows.length != 0) {
-            isFavourite = true;
-          }
-        });
-        dbClient.query("SELECT avg(rating) FROM users_reviews WHERE id_book = $1", [bookID], function(errAvg, resAvg) {
-          if (!errAvg) {
-            averageRating = resAvg.rows[0].avg;
-          }
-        });
-        dbClient.query("SELECT users_reviews.review, users_reviews.rating, users.name FROM users_reviews INNER JOIN users ON users_reviews.id_user = users.id_user WHERE users_reviews.id_book=$1", [bookID], function(dbErrReview, dbResReview) {
-          if (dbErrReview || dbResReview.rows.length == 0) {
-            no_reviews = true;
-          }
-          reviews = dbResReview.rows;
-          resolve();
-        });
+      //runs in parallel, continues when all four are done
+      return Promise.all([
+        dbPool.query("SELECT * FROM users_reviews WHERE id_user = $1 AND id_book = $2", [userID, bookID]),
+        dbPool.query("SELECT * FROM users_favourites WHERE id_book = $1 AND id_user = $2", [bookID, userID]),
+        dbPool.query("SELECT avg(rating) FROM users_reviews WHERE id_book = $1", [bookID]),
+        dbPool.query("SELECT users_reviews.review, users_reviews.rating, users.name FROM users_reviews INNER JOIN users ON users_reviews.id_user = users.id_user WHERE users_reviews.id_book=$1", [bookID])
+      ]).then(([dbResReviewDupCheck, dbResLookupIfFavourite, resAvg, dbResReview]) => {
+        reviewed = dbResReviewDupCheck.rows.length != 0;
+        isFavourite = dbResLookupIfFavourite.rows.length != 0;
+        averageRating = resAvg.rows[0].avg;
+        reviews = dbResReview.rows;
+        no_reviews = reviews.length == 0;
       });
     })
     .then(() => {
@@ -462,6 +454,7 @@ app.get("/search/:id", function(req, res) {
             loggedIn: req.session.loggedIn,
             reviewed,
             results,
+            error_review,
             isFavourite,
             averageRating,
             username: req.session.user
@@ -482,6 +475,7 @@ app.get("/search/:id", function(req, res) {
             loggedIn: req.session.loggedIn,
             reviewed,
             results: resultsTwo,
+            error_review,
             isFavourite,
             averageRating,
             username: req.session.user
@@ -497,7 +491,7 @@ app.get("/search/:id", function(req, res) {
 
 app.post("/searchRandom", urlencodedParser, function(req, res) {
   let randomBookID;
-  dbClient.query("SELECT id_book FROM books ORDER BY RANDOM() LIMIT 1", function(dbErr, dbRes) {
+  dbPool.query("SELECT id_book FROM books ORDER BY RANDOM() LIMIT 1", function(dbErr, dbRes) {
     if (!dbErr) {
       randomBookID = dbRes.rows[0].id_book;
       res.redirect("/search/" + randomBookID);
@@ -509,10 +503,18 @@ app.post("/addReview", urlencodedParser, function(req, res) {
   let userID = req.session.userID;
   let bookID = req.session.bookID;
   let review = req.body.userReview;
-  let rating = req.body.rating;
-  if (review != "") {
-    dbClient.query("INSERT INTO users_reviews(id_user, id_book, review, rating) VALUES($1, $2, $3, $4)", [userID, bookID, review, rating], function(dbErr, dbRes) {
-      res.redirect("/search/" + bookID);
+  let rating = parseInt(req.body.rating, 10);
+  if (!(rating >= 1 && rating <= 5)) {
+    req.session.reviewError = true;
+    res.redirect("/search/" + bookID);
+  } else if (review != "") {
+    dbPool.query("INSERT INTO users_reviews(id_user, id_book, review, rating) VALUES($1, $2, $3, $4)", [userID, bookID, review, rating], function(dbErr, dbRes) {
+      if (dbErr) {
+        console.log(dbErr);
+        res.redirect("/error");
+      } else {
+        res.redirect("/search/" + bookID);
+      }
     });
   } else {
     res.redirect("/error");
@@ -525,7 +527,7 @@ app.post("/addFavourite", urlencodedParser, function(req, res) {
   let bookID = req.session.bookID;
 
   new Promise(function(resolve, reject) {
-      dbClient.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck) {
+      dbPool.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck) {
         if (dbErrDupCheck || dbResDupCheck.rows.length != 0) {
           reject();
         } else {
@@ -535,7 +537,7 @@ app.post("/addFavourite", urlencodedParser, function(req, res) {
     })
     .then(() => {
       return new Promise(function(resolve, reject) {
-        dbClient.query("INSERT INTO users_favourites(id_user, id_book) VALUES($1, $2)", [userID, bookID], function(dbErr, dbRes) {
+        dbPool.query("INSERT INTO users_favourites(id_user, id_book) VALUES($1, $2)", [userID, bookID], function(dbErr, dbRes) {
           if (dbErr == undefined) {
             resolve();
           } else {
@@ -557,7 +559,7 @@ app.post("/removeFavourite/:id/:where", urlencodedParser, function(req, res) {
   let where = req.params.where;
 
   let p = new Promise(function(resolve, reject) {
-    dbClient.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck) {
+    dbPool.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck) {
       if (dbResDupCheck.rows.length == 1) {
         resolve();
       } else {
@@ -567,7 +569,7 @@ app.post("/removeFavourite/:id/:where", urlencodedParser, function(req, res) {
   });
 
   p.then(() => {
-      dbClient.query("DELETE FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErr, dbRes) {
+      dbPool.query("DELETE FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErr, dbRes) {
         if (dbErr == undefined) {
           if (where == "favourites") {
             res.redirect("/favourites");
@@ -603,7 +605,7 @@ app.post("/changePassword", urlencodedParser, function(req, res) {
     });
   } else {
     let p = new Promise(function(resolve, reject) {
-      dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [input.name], function(dbErr, dbRes) {
+      dbPool.query("SELECT id_user, password FROM users WHERE name = $1", [input.name], function(dbErr, dbRes) {
         if (dbRes.rows.length == 0 || dbErr != undefined) {
           reject();
         } else {
@@ -638,7 +640,7 @@ app.post("/changePassword", urlencodedParser, function(req, res) {
         });
       }).then(() => {
         return new Promise(function(resolve, reject) {
-          dbClient.query("UPDATE users SET password = $1 WHERE id_user = $2", [hash, userID], function(dbErr, dbRes) {
+          dbPool.query("UPDATE users SET password = $1 WHERE id_user = $2", [hash, userID], function(dbErr, dbRes) {
             if (dbErr == undefined) {
               resolve();
             } else {
@@ -679,14 +681,14 @@ app.post("/changeEmail", urlencodedParser, function(req, res) {
   let hash;
 
   let p = new Promise(function(resolve, reject) {
-    dbClient.query("SELECT id_user, password FROM users WHERE name = $1", [input.name], function(dbErr, dbRes) {
+    dbPool.query("SELECT id_user, password FROM users WHERE name = $1", [input.name], function(dbErr, dbRes) {
       if (dbRes.rows.length == 0 || dbErr != undefined) reject(1);
       else resolve(dbRes);
     });
   });
   p.then((dbRes) => {
     return new Promise(function(resolve, reject) {
-      dbClient.query("SELECT id_user FROM users WHERE email = $1", [input.newEmail], function(dbDupErr, dbDupRes) {
+      dbPool.query("SELECT id_user FROM users WHERE email = $1", [input.newEmail], function(dbDupErr, dbDupRes) {
         if (dbDupRes.rows.length != 0) reject(2);
         else {
           hash = dbRes.rows[0].password;
@@ -703,7 +705,7 @@ app.post("/changeEmail", urlencodedParser, function(req, res) {
       });
     });
   }).then(() => {
-    dbClient.query("UPDATE users SET email = $1 WHERE id_user = $2", [input.newEmail, userID], function(dbErr, dbRes) {
+    dbPool.query("UPDATE users SET email = $1 WHERE id_user = $2", [input.newEmail, userID], function(dbErr, dbRes) {
       if (dbErr == undefined) {
         res.render("account", {
           emailUpdated: true,

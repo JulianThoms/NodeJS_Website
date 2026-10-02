@@ -76,3 +76,14 @@ function lock() {
   }
   rating_input.value = score;
 }
+
+//a review needs a rating, so don't send the form without one
+const reviewForm = document.getElementById('review_form');
+if (reviewForm) {
+  reviewForm.addEventListener("submit", function(event) {
+    if (rating_input.value == "") {
+      event.preventDefault();
+      document.getElementById('rating_hint').classList.remove("d-none");
+    }
+  });
+}

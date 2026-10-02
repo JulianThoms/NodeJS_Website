@@ -116,7 +116,8 @@ block content
       div(class="row justify-content-center")
         div(class="col-1")
         div(class="col-9")
-          form(action="/addReview" method="post" class="form-group")
+          form(action="/addReview" method="post" class="form-group" id="review_form")
+            div(id="rating_hint" class=error_review ? "alert alert-warning" : "alert alert-warning d-none") Please choose a rating by clicking on a star!
             input(type="hidden" value="" name="rating" id="rating_input")
             textarea(type="text" placeholder="Read this book? Write a Review!" name="userReview" maxlength="512" class="form-control text-light" rows="4" style="background-color:#484d53; border:none" required)
             button(type="submit" class="btn btn-block grayBackground text-light mt-2") Submit!

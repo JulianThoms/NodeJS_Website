@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS users_reviews (
   id_user INTEGER NOT NULL REFERENCES users (id_user) ON DELETE CASCADE,
   id_book INTEGER NOT NULL REFERENCES books (id_book) ON DELETE CASCADE,
   review TEXT NOT NULL,
-  rating INTEGER CHECK (rating BETWEEN 0 AND 5),
+  rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
   PRIMARY KEY (id_user, id_book)
 );
 
