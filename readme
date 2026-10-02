@@ -1,11 +1,28 @@
 A webpage using Node.JS with Express, PUG, BCrypt, sessions, googlebookslookup.
 Connected to a PostGreSQL Database.
 
+Getting started:
+1. Install Node.js 18 or newer (22 LTS recommended) and PostgreSQL
+   (locally or a hosted one, e.g. Neon or Supabase).
+2. Install the dependencies:
+     npm install
+3. Set DB_CON_STRING to your database. For a local database without SSL
+   add "?sslmode=disable" at the end.
+     PowerShell:  $env:DB_CON_STRING = "postgres://user:password@localhost:5432/bookstore?sslmode=disable"
+     Bash:        export DB_CON_STRING="postgres://user:password@localhost:5432/bookstore?sslmode=disable"
+4. Create the tables, the test account and some sample books (see schema.sql):
+     npm run setup-db
+5. Optional: import more books from a CSV file (columns: isbn, title, author, year):
+     npm run import -- books.csv
+6. Start the server:
+     npm start
+7. Open http://localhost:3000 in your browser.
+
+Book covers and descriptions come from the Google Books API. If Google limits
+the requests, the book pages are shown without them.
+
 Testaccount:
 Username: "Markus"
 Password: "password"
 Email: "Markus@email.de"
 Answer-Password-Reset: "Schnabeltier"
-
-DB:
-CON_STRING: "postgres://lqkivzqdzcaalr:78e9f45f9f4195a0fa11636e58447dd83ef914c0626af5ef55c12177af0e1c5b@ec2-54-75-235-28.eu-west-1.compute.amazonaws.com:5432/dc0kk7vjlc3fti"

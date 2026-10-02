@@ -2,12 +2,9 @@
 /* jshint node: true */
 
 const express = require("express");
-const pg = require("pg");
-const bodyParser = require("body-parser");
+const { createClient } = require("./db");
 const session = require("express-session");
 const bcrypt = require('bcryptjs');
-//const nodemailer = require("nodemailer");
-//let transporter = nodemailer.createTransport(transport[, defaults]); //only one required
 const saltRounds = 10;
 const googlebooks = require('google-books-search');
 
@@ -17,17 +14,19 @@ const options = {
   limit: 1
 };
 
-const CON_STRING = process.env.DB_CON_STRING || "postgres://lqkivzqdzcaalr:78e9f45f9f4195a0fa11636e58447dd83ef914c0626af5ef55c12177af0e1c5b@ec2-54-75-235-28.eu-west-1.compute.amazonaws.com:5432/dc0kk7vjlc3fti";
+const CON_STRING = process.env.DB_CON_STRING;
 if (CON_STRING == undefined) {
   console.log("Error: Environment variable DB_CON_STRING not set!");
   process.exit(1);
 }
 
-pg.defaults.ssl = true;
-const dbClient = new pg.Client(CON_STRING);
-dbClient.connect();
+const dbClient = createClient(CON_STRING);
+dbClient.connect().catch(function(err) {
+  console.log("Error: Could not connect to the database (" + err.message + "). Check DB_CON_STRING!");
+  process.exit(1);
+});
 
-const urlencodedParser = bodyParser.urlencoded({
+const urlencodedParser = express.urlencoded({
   extended: false
 });
 
@@ -254,7 +253,7 @@ app.get("/error", function(req, res) {
 
 
 //STOPS LOGGED-OUT PEOPLE FROM ACCESSING BELOW PAGES
-app.get("*", function(req, res, next) {
+app.get("/{*splat}", function(req, res, next) {
 
   if (req.session.user == undefined) {
     res.render("error", {
@@ -265,7 +264,7 @@ app.get("*", function(req, res, next) {
   }
 });
 
-app.post("*", function(req, res, next) {
+app.post("/{*splat}", function(req, res, next) {
   if (req.session.user == undefined) {
     res.render("error", {
       error_message: "You have to be logged in to see this page!"
@@ -436,7 +435,7 @@ app.get("/search/:id", function(req, res) {
 
       let searchp = new Promise(function(resolve, reject) {
         googlebooks.search(dbRes.rows[0].isbn, options, function(error, resultsOne) {
-          if (resultsOne[0] == undefined) {
+          if (error || resultsOne == undefined || resultsOne[0] == undefined) {
             reject();
           } else {
             results = resultsOne[0];
@@ -447,10 +446,11 @@ app.get("/search/:id", function(req, res) {
 
       let searchTwo = new Promise(function(resolve, reject) {
         googlebooks.search(dbRes.rows[0].title, function(errorISBN, resultsISBN) {
-          if (errorISBN) {} else {
+          //render the page without Google data if the lookup fails (e.g. rate limit)
+          if (!errorISBN && resultsISBN != undefined) {
             resultsTwo = resultsISBN[0];
-            resolve();
           }
+          resolve();
         });
       })
       searchp.then(() => {
@@ -524,7 +524,7 @@ app.post("/addFavourite", urlencodedParser, function(req, res) {
   let userID = req.session.userID;
   let bookID = req.session.bookID;
 
-  let p = new Promise(function(resolve, reject) {
+  new Promise(function(resolve, reject) {
       dbClient.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck) {
         if (dbErrDupCheck || dbResDupCheck.rows.length != 0) {
           reject();
@@ -547,7 +547,7 @@ app.post("/addFavourite", urlencodedParser, function(req, res) {
       res.redirect("/search/" + bookID)
 
     }).catch(() => {
-      res.redirect("/error", 500);
+      res.redirect(500, "/error");
     })
 });
 
@@ -555,7 +555,6 @@ app.post("/removeFavourite/:id/:where", urlencodedParser, function(req, res) {
   let userID = req.session.userID;
   let bookID = req.params.id;
   let where = req.params.where;
-  console.log(where);
 
   let p = new Promise(function(resolve, reject) {
     dbClient.query("SELECT * FROM users_favourites WHERE id_user = $1 AND id_book = $2", [userID, bookID], function(dbErrDupCheck, dbResDupCheck) {
@@ -576,7 +575,7 @@ app.post("/removeFavourite/:id/:where", urlencodedParser, function(req, res) {
             res.redirect("/search/" + bookID);
           }
         } else {
-          res.redirect("/error", 500);
+          res.redirect(500, "/error");
         }
       });
     })
@@ -747,7 +746,7 @@ app.post("/changeEmail", urlencodedParser, function(req, res) {
 
 
 //Catches wrong pages
-app.get("*", function(req, res) {
+app.get("/{*splat}", function(req, res) {
   res.render("error", {
     error_message: "This page does not exist!",
     loggedIn: req.session.loggedIn,
